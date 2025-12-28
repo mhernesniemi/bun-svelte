@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Heading } from '$lib/components/ui/heading';
-  import { Label } from '$lib/components/ui/label';
-  import { Textarea } from '$lib/components/ui/textarea';
-  import QuestionRatingRow from './question-rating-row.svelte';
+  import { Heading } from "$lib/components/ui/heading";
+  import { Label } from "$lib/components/ui/label";
+  import { Textarea } from "$lib/components/ui/textarea";
+  import QuestionRatingRow from "./question-rating-row.svelte";
 
   type Group = { id: number; title: string; questions: { id: number; questionText: string }[] };
 
@@ -18,7 +18,7 @@
 
   let { group, groupAnswers, onQuestionRatingChange, onGroupCommentChange }: Props = $props();
 
-  let commentValue = $state('');
+  let commentValue = $state("");
 
   $effect(() => {
     commentValue = groupAnswers.comment;
@@ -45,12 +45,6 @@
 
   <div class="space-y-2">
     <Label for={`comment-${group.id}`}>Group Comment (optional)</Label>
-    <Textarea
-      id={`comment-${group.id}`}
-      bind:value={commentValue}
-      rows={3}
-    ></Textarea>
+    <Textarea id={`comment-${group.id}`} bind:value={commentValue} rows={3}></Textarea>
   </div>
 </div>
-
-

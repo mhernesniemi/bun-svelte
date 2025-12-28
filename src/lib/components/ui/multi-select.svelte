@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cn } from '@/utils';
+  import { cn } from "@/utils";
 
   type Option = { id: number; username: string };
 
@@ -17,14 +17,14 @@
     options,
     selected = $bindable<number[]>([]),
     maxSelections = 5,
-    placeholder = 'Select users...',
-    searchPlaceholder = 'Search by username...',
-    emptyMessage = 'No users found',
-    class: className = ''
+    placeholder = "Select users...",
+    searchPlaceholder = "Search by username...",
+    emptyMessage = "No users found",
+    class: className = ""
   }: Props = $props();
 
   let isOpen = $state(false);
-  let search = $state('');
+  let search = $state("");
   let container: HTMLDivElement | null = $state(null);
 
   const selectedOptions = $derived(options.filter((o) => selected.includes(o.id)));
@@ -51,18 +51,18 @@
     if (!container) return;
     if (!container.contains(e.target as Node)) {
       isOpen = false;
-      search = '';
+      search = "";
     }
   }
 
   $effect(() => {
     if (!isOpen) return;
-    document.addEventListener('mousedown', onDocMouseDown);
-    return () => document.removeEventListener('mousedown', onDocMouseDown);
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
   });
 </script>
 
-<div bind:this={container} class={cn('relative w-full', className)}>
+<div bind:this={container} class={cn("relative w-full", className)}>
   <button
     type="button"
     class="flex min-h-9 w-full items-center gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors hover:bg-accent"
@@ -71,7 +71,9 @@
     <div class="flex flex-1 flex-wrap gap-1.5">
       {#if selectedOptions.length > 0}
         {#each selectedOptions as opt (opt.id)}
-          <span class="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          <span
+            class="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+          >
             {opt.username}
             <span
               class="cursor-pointer rounded-sm hover:bg-primary/20"
@@ -79,7 +81,7 @@
               tabindex="0"
               onclick={(e) => (e.stopPropagation(), remove(opt.id))}
               onkeydown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   e.stopPropagation();
                   remove(opt.id);
@@ -117,15 +119,17 @@
             <button
               type="button"
               class={cn(
-                'flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors',
-                isSelected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground',
-                isDisabled && 'opacity-50 cursor-not-allowed'
+                "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors",
+                isSelected
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent hover:text-accent-foreground",
+                isDisabled && "cursor-not-allowed opacity-50"
               )}
               disabled={isDisabled}
               onclick={() => toggle(opt.id)}
             >
               <span>{opt.username}</span>
-              <span class="text-xs">{isSelected ? '✓' : ''}</span>
+              <span class="text-xs">{isSelected ? "✓" : ""}</span>
             </button>
           {/each}
         {/if}
@@ -133,5 +137,3 @@
     </div>
   {/if}
 </div>
-
-

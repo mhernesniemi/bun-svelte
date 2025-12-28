@@ -1,32 +1,27 @@
-import { eq } from 'drizzle-orm';
-import { db } from './db';
-import { users } from './db/schema';
+import { eq } from "drizzle-orm";
+import { db } from "./db";
+import { users } from "./db/schema";
 
 export async function hashPassword(password: string): Promise<string> {
-	return Bun.password.hash(password);
+  return Bun.password.hash(password);
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-	return Bun.password.verify(password, hash);
+  return Bun.password.verify(password, hash);
 }
 
 export async function getUserByUsername(username: string) {
-	const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-	return user ?? null;
+  const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  return user ?? null;
 }
 
 export async function getUserById(id: number) {
-	const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-	return user ?? null;
+  const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return user ?? null;
 }
 
 export async function createUser(username: string, password: string) {
-	const hashed = await hashPassword(password);
-	const [user] = await db
-		.insert(users)
-		.values({ username, password: hashed })
-		.returning();
-	return user;
+  const hashed = await hashPassword(password);
+  const [user] = await db.insert(users).values({ username, password: hashed }).returning();
+  return user;
 }
-
-

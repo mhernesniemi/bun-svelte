@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Label } from '$lib/components/ui/label';
-  import RatingSelector from '@/components/ui/rating-selector.svelte';
-  import { cn } from '@/utils';
+  import { Label } from "$lib/components/ui/label";
+  import RatingSelector from "@/components/ui/rating-selector.svelte";
+  import { cn } from "@/utils";
 
   type Props = {
     class?: string;
@@ -11,15 +11,13 @@
     onChange: (rating: number) => void;
   };
 
-  let { class: className = '', questionId, questionText, value, onChange }: Props = $props();
+  let { class: className = "", questionId, questionText, value, onChange }: Props = $props();
   const labelId = $derived(`rating-label-${questionId}`);
 </script>
 
-<div class={cn('grid pb-5 sm:grid-cols-[1fr_320px] sm:items-center', className)}>
+<div class={cn("grid pb-5 sm:grid-cols-[1fr_320px] sm:items-center", className)}>
   <div class="min-w-0">
     <Label for={labelId} class="leading-snug">{questionText}</Label>
   </div>
-  <RatingSelector value={value} onValueChange={onChange} class="justify-end" />
+  <RatingSelector {value} onValueChange={onChange} class="justify-end" />
 </div>
-
-
