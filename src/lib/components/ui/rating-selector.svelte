@@ -21,15 +21,15 @@
       type="button"
       class={cn(
         "h-8 w-8 rounded-full border text-sm transition",
-        selected
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input bg-background hover:border-foreground/30",
-        disabled && "cursor-not-allowed opacity-60"
+        disabled && !selected && "cursor-not-allowed border-muted bg-muted text-muted-foreground",
+        selected && "border-primary bg-primary text-primary-foreground opacity-50"
       )}
       {disabled}
       role="radio"
       aria-checked={selected}
-      onclick={() => onValueChange(grade)}
+      onclick={() => {
+        if (!disabled) onValueChange(grade);
+      }}
     >
       {grade}
     </button>

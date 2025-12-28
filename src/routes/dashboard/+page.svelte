@@ -22,6 +22,8 @@
   let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
   let autosaveForm = $state<HTMLFormElement | null>(null);
 
+  const isFeedbackSubmitted = $derived(toUserId !== null && data.submittedFeedback.has(toUserId));
+
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
@@ -85,6 +87,7 @@
 
   function updateQuestionRating(groupId: number, questionId: number, rating: number) {
     if (toUserId === null) return;
+    if (isFeedbackSubmitted) return;
     if (!answers[toUserId]) answers[toUserId] = {};
 
     const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: "" };
@@ -98,6 +101,7 @@
 
   function updateGroupComment(groupId: number, comment: string) {
     if (toUserId === null) return;
+    if (isFeedbackSubmitted) return;
     if (!answers[toUserId]) answers[toUserId] = {};
 
     const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: "" };
@@ -174,7 +178,7 @@
           <CardTitle class="flex items-center justify-between gap-2">
             <span>Give Feedback to {getUserName(toUserId)}</span>
             {#if toUserId !== null}
-              {#if data.submittedFeedback.has(toUserId)}
+              {#if isFeedbackSubmitted}
                 <span class="text-green-500">Submitted</span>
               {:else if data.drafts.has(toUserId)}
                 <span class="text-gray-500">Draft</span>
@@ -229,17 +233,13 @@
                   }}
                   onQuestionRatingChange={updateQuestionRating}
                   onGroupCommentChange={updateGroupComment}
+                  disabled={isFeedbackSubmitted}
                 />
               {/each}
             </div>
 
             <div class="flex items-center justify-end">
-              <Button
-                type="submit"
-                disabled={toUserId !== null && data.submittedFeedback.has(toUserId)}
-              >
-                Submit
-              </Button>
+              <Button type="submit" disabled={isFeedbackSubmitted}>Submit</Button>
             </div>
           </form>
         </CardContent>

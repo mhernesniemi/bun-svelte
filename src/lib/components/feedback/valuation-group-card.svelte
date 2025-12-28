@@ -14,9 +14,10 @@
     };
     onQuestionRatingChange: (groupId: number, questionId: number, rating: number) => void;
     onGroupCommentChange: (groupId: number, comment: string) => void;
+    disabled?: boolean;
   };
 
-  let { group, groupAnswers, onQuestionRatingChange, onGroupCommentChange }: Props = $props();
+  let { group, groupAnswers, onQuestionRatingChange, onGroupCommentChange, disabled = false }: Props = $props();
 
   let commentValue = $state("");
 
@@ -25,6 +26,7 @@
   });
 
   function handleCommentInput(e: Event) {
+    if (disabled) return;
     const value = (e.currentTarget as HTMLTextAreaElement).value;
     commentValue = value;
     onGroupCommentChange(group.id, value);
@@ -41,6 +43,7 @@
         questionText={q.questionText}
         value={groupAnswers.questionAnswers[q.id] ?? null}
         onChange={(next) => onQuestionRatingChange(group.id, q.id, next)}
+        {disabled}
       />
     {/each}
   </div>
@@ -51,6 +54,7 @@
       id={`comment-${group.id}`}
       bind:value={commentValue}
       oninput={handleCommentInput}
+      {disabled}
       rows={3}
     ></Textarea>
   </div>

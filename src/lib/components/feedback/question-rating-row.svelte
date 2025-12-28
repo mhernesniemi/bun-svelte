@@ -9,9 +9,10 @@
     questionText: string;
     value: number | null;
     onChange: (rating: number) => void;
+    disabled?: boolean;
   };
 
-  let { class: className = "", questionId, questionText, value, onChange }: Props = $props();
+  let { class: className = "", questionId, questionText, value, onChange, disabled = false }: Props = $props();
   const labelId = $derived(`rating-label-${questionId}`);
 </script>
 
@@ -19,5 +20,5 @@
   <div class="min-w-0">
     <Label for={labelId} class="leading-snug">{questionText}</Label>
   </div>
-  <RatingSelector {value} onValueChange={onChange} class="justify-end" />
+  <RatingSelector {value} onValueChange={onChange} {disabled} class="justify-end" />
 </div>
