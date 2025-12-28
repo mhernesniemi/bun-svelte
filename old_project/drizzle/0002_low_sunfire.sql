@@ -1,0 +1,1 @@
+ALTER TABLE `comments` ADD `user_id` integer NOT NULL REFERENCES users(id);

@@ -1,0 +1,1 @@
+ALTER TABLE `comments` ADD `title` text NOT NULL DEFAULT '';

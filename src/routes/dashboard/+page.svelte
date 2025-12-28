@@ -1,0 +1,166 @@
+<script lang="ts">
+  import { enhance } from '$app/forms';
+  import { Heading } from '$lib/components/ui/heading';
+  import { Button } from '$lib/components/ui/button';
+  import { Card, CardHeader, CardTitle, CardContent } from '$lib/components/ui/card';
+  import FeedbackRequestSelection from '@/components/feedback/feedback-request-selection.svelte';
+  import ValuationGroupCard from '@/components/feedback/valuation-group-card.svelte';
+  import type { PageData, ActionData } from './$types';
+
+  let { data, form }: { data: PageData; form: ActionData } = $props();
+
+  type GroupAnswersState = Record<
+    number,
+    { questionAnswers: Record<number, number>; comment: string }
+  >;
+
+  let toUserId = $state<number | null>(null);
+
+  $effect(() => {
+    if (toUserId === null && data.receivedRequests.length > 0) {
+      toUserId = data.receivedRequests[0]?.userId ?? null;
+    }
+  });
+  let answers = $state<Record<number, GroupAnswersState>>({});
+  let error = $state<string | null>(null);
+
+  $effect(() => {
+    error = (form as any)?.error ?? null;
+  });
+
+  function getUserName(userId: number | null) {
+    if (userId === null) return 'Unknown';
+    return data.receivedRequests.find((r) => r.userId === userId)?.username ?? 'Unknown';
+  }
+
+  function ensureRecipientState(userId: number) {
+    if (!answers[userId]) answers[userId] = {};
+  }
+
+  function updateQuestionRating(groupId: number, questionId: number, rating: number) {
+    if (toUserId === null) return;
+    ensureRecipientState(toUserId);
+    const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: '' };
+    answers[toUserId][groupId] = {
+      ...group,
+      questionAnswers: { ...group.questionAnswers, [questionId]: rating }
+    };
+  }
+
+  function updateGroupComment(groupId: number, comment: string) {
+    if (toUserId === null) return;
+    ensureRecipientState(toUserId);
+    const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: '' };
+    answers[toUserId][groupId] = { ...group, comment };
+  }
+
+  function buildPayload() {
+    if (toUserId === null) return '[]';
+    const groupAnswers = answers[toUserId] ?? {};
+    return JSON.stringify(
+      data.groups.map((g) => ({
+        groupId: g.id,
+        questions: g.questions.map((q) => ({
+          questionId: q.id,
+          rating: groupAnswers[g.id]?.questionAnswers[q.id] ?? 0
+        })),
+        comment: groupAnswers[g.id]?.comment?.trim() || undefined
+      }))
+    );
+  }
+</script>
+
+<div class="min-h-screen w-full bg-linear-to-b from-background via-background to-muted/30 px-4 py-8">
+  <div class="mx-auto max-w-4xl space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0">
+        <Heading level={1} class="text-2xl sm:text-3xl">Colleague Feedback</Heading>
+        <p class="mt-1 text-sm text-muted-foreground">
+          {data.hasRequests
+            ? 'Give and receive anonymous feedback from your colleagues.'
+            : 'Select colleagues you want feedback from to get started.'}
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 rounded-full border bg-card/50 px-3 py-1 text-sm text-muted-foreground backdrop-blur supports-backdrop-filter:bg-card/40">
+          <span class="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
+          <span class="max-w-56 truncate">{data.user.username}</span>
+        </div>
+        <form method="POST" action="/logout" use:enhance>
+          <Button type="submit" variant="outline" size="sm">Logout</Button>
+        </form>
+      </div>
+    </div>
+
+    {#if !data.hasRequests}
+      <FeedbackRequestSelection users={data.users} form={form as any} />
+    {:else}
+      {#if data.receivedRequests.length === 0}
+        <Card class="rounded-2xl border-0 bg-card/50 shadow-lg ring-1 ring-border/30 backdrop-blur supports-backdrop-filter:bg-card/40">
+          <CardHeader>
+            <CardTitle>No requests yet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm text-muted-foreground">
+              Wait for colleagues to request feedback from you.
+            </p>
+          </CardContent>
+        </Card>
+      {:else}
+        <div class="sticky top-0 z-50 space-y-2 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 pb-2">
+          <div class="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto">
+            {#each data.receivedRequests as r (r.id)}
+              <Button
+                type="button"
+                variant={toUserId === r.userId ? 'default' : 'outline'}
+                size="sm"
+                class="shrink-0"
+                onclick={() => (toUserId = r.userId)}
+              >
+                {r.username}
+              </Button>
+            {/each}
+          </div>
+        </div>
+
+        <Card class="rounded-2xl border-0 bg-card/50 shadow-lg ring-1 ring-border/30 backdrop-blur supports-backdrop-filter:bg-card/40">
+          <CardHeader>
+            <CardTitle class="flex items-center justify-between gap-2">
+              <span>Give Feedback to {getUserName(toUserId)}</span>
+              <span class="text-green-500">Completed</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form method="POST" action="?/createFeedback" use:enhance class="space-y-6">
+              {#if error}
+                <div class="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
+              {/if}
+
+              <input type="hidden" name="toUserId" value={toUserId ?? ''} />
+              <input type="hidden" name="groups" value={buildPayload()} />
+
+              <div class="space-y-6">
+                {#each data.groups as group (group.id)}
+                  <ValuationGroupCard
+                    {group}
+                    groupAnswers={(toUserId ? answers[toUserId]?.[group.id] : null) ?? { questionAnswers: {}, comment: '' }}
+                    onQuestionRatingChange={updateQuestionRating}
+                    onGroupCommentChange={updateGroupComment}
+                  />
+                {/each}
+              </div>
+
+              <div class="flex items-center justify-end">
+                <Button type="submit">Submit</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      {/if}
+    {/if}
+  </div>
+</div>
+
+
