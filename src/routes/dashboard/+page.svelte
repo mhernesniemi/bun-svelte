@@ -1,5 +1,7 @@
 <script lang="ts">
   import { enhance } from "$app/forms";
+  import { invalidateAll } from "$app/navigation";
+  import { toast } from "svelte-sonner";
   import { Heading } from "$lib/components/ui/heading";
   import { Button } from "$lib/components/ui/button";
   import { Card, CardHeader, CardTitle, CardContent } from "$lib/components/ui/card";
@@ -125,7 +127,7 @@
           <span class="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
           <span class="max-w-56 truncate">{data.user.username}</span>
         </div>
-        <form method="POST" action="/logout" use:enhance>
+        <form method="POST" action="/logout">
           <Button type="submit" variant="outline" size="sm">Logout</Button>
         </form>
       </div>
@@ -193,7 +195,19 @@
             <input type="hidden" name="toUserId" bind:value={toUserId} />
             <input type="hidden" name="groups" value={buildPayload()} />
           </form>
-          <form method="POST" action="?/createFeedback" use:enhance class="space-y-6">
+          <form
+            method="POST"
+            action="?/createFeedback"
+            use:enhance={() =>
+              async ({ result, update }) => {
+                await update();
+                if (result.type === "success") {
+                  await invalidateAll();
+                  toast.success(`Feedback has been submitted for ${getUserName(toUserId)}`);
+                }
+              }}
+            class="space-y-6"
+          >
             {#if error}
               <div
                 class="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
@@ -220,7 +234,12 @@
             </div>
 
             <div class="flex items-center justify-end">
-              <Button type="submit">Submit</Button>
+              <Button
+                type="submit"
+                disabled={toUserId !== null && data.submittedFeedback.has(toUserId)}
+              >
+                Submit
+              </Button>
             </div>
           </form>
         </CardContent>
