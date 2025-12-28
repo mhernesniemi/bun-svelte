@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "bun --bun vite dev",
+    "dev": "bun run db:push && bun --bun vite dev",
     "build": "vite build",
     "preview": "bun --bun vite preview",
     "prepare": "svelte-kit sync || echo ''",

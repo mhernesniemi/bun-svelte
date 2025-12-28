@@ -18,6 +18,7 @@
   let answers = $state<Record<number, GroupAnswersState>>({});
   let error = $state<string | null>(null);
   let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+  let autosaveForm = $state<HTMLFormElement | null>(null);
 
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
@@ -26,26 +27,24 @@
   });
 
   $effect(() => {
-    error = (form as any)?.error ?? null;
+    error = form?.error ?? null;
   });
 
   $effect(() => {
-    if (data.drafts && data.receivedRequests.length > 0) {
-      for (const request of data.receivedRequests) {
-        const draft = data.drafts.get(request.userId);
-        if (draft) {
-          const draftAnswers: GroupAnswersState = {};
-          for (const group of draft) {
-            draftAnswers[group.groupId] = {
-              questionAnswers: Object.fromEntries(
-                group.questions.map((q) => [q.questionId, q.rating])
-              ),
-              comment: group.comment || ""
-            };
-          }
-          answers[request.userId] = draftAnswers;
-        }
+    if (!data.drafts || data.receivedRequests.length === 0) return;
+
+    for (const request of data.receivedRequests) {
+      const draft = data.drafts.get(request.userId);
+      if (!draft) continue;
+
+      const draftAnswers: GroupAnswersState = {};
+      for (const group of draft) {
+        draftAnswers[group.groupId] = {
+          questionAnswers: Object.fromEntries(group.questions.map((q) => [q.questionId, q.rating])),
+          comment: group.comment || ""
+        };
       }
+      answers[request.userId] = draftAnswers;
     }
   });
 
@@ -69,17 +68,9 @@
     );
   }
 
-  async function autosave() {
+  function autosave() {
     if (toUserId === null) return;
-
-    const formData = new FormData();
-    formData.set("toUserId", String(toUserId));
-    formData.set("groups", buildPayload());
-
-    await fetch("?/autosave", {
-      method: "POST",
-      body: formData
-    });
+    autosaveForm?.requestSubmit();
   }
 
   function scheduleAutosave() {
@@ -184,6 +175,18 @@
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <form
+            bind:this={autosaveForm}
+            method="POST"
+            action="?/autosave"
+            use:enhance={() => {
+              return () => {};
+            }}
+            class="hidden"
+          >
+            <input type="hidden" name="toUserId" bind:value={toUserId} />
+            <input type="hidden" name="groups" value={buildPayload()} />
+          </form>
           <form method="POST" action="?/createFeedback" use:enhance class="space-y-6">
             {#if error}
               <div
