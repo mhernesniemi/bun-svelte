@@ -82,7 +82,7 @@
     autosaveTimer = setTimeout(() => {
       autosave();
       autosaveTimer = null;
-    }, 800);
+    }, 400);
   }
 
   function updateQuestionRating(groupId: number, questionId: number, rating: number) {
