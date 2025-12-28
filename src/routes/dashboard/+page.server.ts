@@ -1,10 +1,11 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { asc, eq, ne } from "drizzle-orm";
+import { asc, eq, ne, and } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types";
 import { db } from "@/server/db";
 import {
   feedback,
   feedbackRequests,
+  feedbackDrafts,
   users,
   valuationAnswers,
   valuationGroupAnswers,
@@ -55,12 +56,29 @@ export const load: PageServerLoad = async ({ locals }) => {
     })
   );
 
+  const drafts = await db
+    .select()
+    .from(feedbackDrafts)
+    .where(eq(feedbackDrafts.fromUserId, locals.user.id));
+
+  const draftsMap = new Map(
+    drafts.map((d) => [
+      d.toUserId,
+      JSON.parse(d.groups) as Array<{
+        groupId: number;
+        questions: Array<{ questionId: number; rating: number }>;
+        comment?: string;
+      }>
+    ])
+  );
+
   return {
     user: locals.user,
     hasRequests,
     receivedRequests,
     users: selectableUsers,
-    groups: groupsWithQuestions
+    groups: groupsWithQuestions,
+    drafts: draftsMap
   };
 };
 
@@ -148,6 +166,57 @@ export const actions: Actions = {
           comment: g.comment.trim()
         });
       }
+    }
+
+    await db
+      .delete(feedbackDrafts)
+      .where(
+        and(
+          eq(feedbackDrafts.fromUserId, event.locals.user.id),
+          eq(feedbackDrafts.toUserId, toUserId)
+        )
+      );
+
+    return { ok: true };
+  },
+
+  autosave: async (event) => {
+    if (!event.locals.user) return fail(401, { error: "Unauthorized" });
+
+    const data = await event.request.formData();
+    const toUserId = Number(data.get("toUserId")?.toString());
+    const groupsRaw = data.get("groups")?.toString();
+
+    if (!Number.isFinite(toUserId) || !groupsRaw) return fail(400, { error: "Invalid payload" });
+
+    try {
+      JSON.parse(groupsRaw);
+    } catch {
+      return fail(400, { error: "Invalid payload" });
+    }
+
+    const [existing] = await db
+      .select()
+      .from(feedbackDrafts)
+      .where(
+        and(
+          eq(feedbackDrafts.fromUserId, event.locals.user.id),
+          eq(feedbackDrafts.toUserId, toUserId)
+        )
+      )
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(feedbackDrafts)
+        .set({ groups: groupsRaw, updatedAt: new Date() })
+        .where(eq(feedbackDrafts.id, existing.id));
+    } else {
+      await db.insert(feedbackDrafts).values({
+        fromUserId: event.locals.user.id,
+        toUserId,
+        groups: groupsRaw
+      });
     }
 
     return { ok: true };

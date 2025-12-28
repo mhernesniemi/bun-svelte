@@ -15,43 +15,43 @@
   >;
 
   let toUserId = $state<number | null>(null);
+  let answers = $state<Record<number, GroupAnswersState>>({});
+  let error = $state<string | null>(null);
+  let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
     }
   });
-  let answers = $state<Record<number, GroupAnswersState>>({});
-  let error = $state<string | null>(null);
 
   $effect(() => {
     error = (form as any)?.error ?? null;
   });
 
+  $effect(() => {
+    if (data.drafts && data.receivedRequests.length > 0) {
+      for (const request of data.receivedRequests) {
+        const draft = data.drafts.get(request.userId);
+        if (draft) {
+          const draftAnswers: GroupAnswersState = {};
+          for (const group of draft) {
+            draftAnswers[group.groupId] = {
+              questionAnswers: Object.fromEntries(
+                group.questions.map((q) => [q.questionId, q.rating])
+              ),
+              comment: group.comment || ""
+            };
+          }
+          answers[request.userId] = draftAnswers;
+        }
+      }
+    }
+  });
+
   function getUserName(userId: number | null) {
     if (userId === null) return "Unknown";
     return data.receivedRequests.find((r) => r.userId === userId)?.username ?? "Unknown";
-  }
-
-  function ensureRecipientState(userId: number) {
-    if (!answers[userId]) answers[userId] = {};
-  }
-
-  function updateQuestionRating(groupId: number, questionId: number, rating: number) {
-    if (toUserId === null) return;
-    ensureRecipientState(toUserId);
-    const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: "" };
-    answers[toUserId][groupId] = {
-      ...group,
-      questionAnswers: { ...group.questionAnswers, [questionId]: rating }
-    };
-  }
-
-  function updateGroupComment(groupId: number, comment: string) {
-    if (toUserId === null) return;
-    ensureRecipientState(toUserId);
-    const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: "" };
-    answers[toUserId][groupId] = { ...group, comment };
   }
 
   function buildPayload() {
@@ -67,6 +67,50 @@
         comment: groupAnswers[g.id]?.comment?.trim() || undefined
       }))
     );
+  }
+
+  async function autosave() {
+    if (toUserId === null) return;
+
+    const formData = new FormData();
+    formData.set("toUserId", String(toUserId));
+    formData.set("groups", buildPayload());
+
+    await fetch("?/autosave", {
+      method: "POST",
+      body: formData
+    });
+  }
+
+  function scheduleAutosave() {
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+      autosave();
+      autosaveTimer = null;
+    }, 800);
+  }
+
+  function updateQuestionRating(groupId: number, questionId: number, rating: number) {
+    if (toUserId === null) return;
+    if (!answers[toUserId]) answers[toUserId] = {};
+
+    const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: "" };
+    answers[toUserId][groupId] = {
+      ...group,
+      questionAnswers: { ...group.questionAnswers, [questionId]: rating }
+    };
+
+    scheduleAutosave();
+  }
+
+  function updateGroupComment(groupId: number, comment: string) {
+    if (toUserId === null) return;
+    if (!answers[toUserId]) answers[toUserId] = {};
+
+    const group = answers[toUserId][groupId] ?? { questionAnswers: {}, comment: "" };
+    answers[toUserId][groupId] = { ...group, comment };
+
+    scheduleAutosave();
   }
 </script>
 

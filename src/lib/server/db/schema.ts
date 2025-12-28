@@ -98,12 +98,27 @@ export const valuationGroupAnswers = sqliteTable("valuation_group_answers", {
     .$defaultFn(() => new Date())
 });
 
+export const feedbackDrafts = sqliteTable("feedback_drafts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  fromUserId: integer("from_user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  toUserId: integer("to_user_id")
+    .notNull()
+    .references(() => users.id),
+  groups: text("groups").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date())
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   feedbackRequests: many(feedbackRequests, { relationName: "userRequests" }),
   requestedFeedback: many(feedbackRequests, { relationName: "requestedFromUser" }),
   feedbackSent: many(feedback, { relationName: "sentFeedback" }),
-  feedbackReceived: many(feedback, { relationName: "receivedFeedback" })
+  feedbackReceived: many(feedback, { relationName: "receivedFeedback" }),
+  feedbackDrafts: many(feedbackDrafts)
 }));
 
 export const commentsRelations = relations(comments, ({ one }) => ({
