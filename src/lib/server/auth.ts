@@ -1,14 +1,13 @@
-import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { db } from './db';
 import { users } from './db/schema';
 
 export async function hashPassword(password: string): Promise<string> {
-	return bcrypt.hash(password, 10);
+	return Bun.password.hash(password);
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-	return bcrypt.compare(password, hash);
+	return Bun.password.verify(password, hash);
 }
 
 export async function getUserByUsername(username: string) {
