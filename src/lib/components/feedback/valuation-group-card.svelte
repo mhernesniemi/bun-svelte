@@ -24,9 +24,11 @@
     commentValue = groupAnswers.comment;
   });
 
-  $effect(() => {
-    onGroupCommentChange(group.id, commentValue);
-  });
+  function handleCommentInput(e: Event) {
+    const value = (e.currentTarget as HTMLTextAreaElement).value;
+    commentValue = value;
+    onGroupCommentChange(group.id, value);
+  }
 </script>
 
 <div class="space-y-4 rounded-2xl border bg-card/20 p-5">
@@ -45,6 +47,11 @@
 
   <div class="space-y-2">
     <Label for={`comment-${group.id}`}>Group Comment (optional)</Label>
-    <Textarea id={`comment-${group.id}`} bind:value={commentValue} rows={3}></Textarea>
+    <Textarea
+      id={`comment-${group.id}`}
+      bind:value={commentValue}
+      oninput={handleCommentInput}
+      rows={3}
+    ></Textarea>
   </div>
 </div>
