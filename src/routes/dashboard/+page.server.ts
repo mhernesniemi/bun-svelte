@@ -176,15 +176,6 @@ export const actions: Actions = {
       }
     }
 
-    await db
-      .delete(feedbackDrafts)
-      .where(
-        and(
-          eq(feedbackDrafts.fromUserId, event.locals.user.id),
-          eq(feedbackDrafts.toUserId, toUserId)
-        )
-      );
-
     return { ok: true };
   },
 
