@@ -171,7 +171,13 @@
         <CardHeader>
           <CardTitle class="flex items-center justify-between gap-2">
             <span>Give Feedback to {getUserName(toUserId)}</span>
-            <span class="text-green-500">Completed</span>
+            {#if toUserId !== null}
+              {#if data.submittedFeedback.has(toUserId)}
+                <span class="text-green-500">Submitted</span>
+              {:else if data.drafts.has(toUserId)}
+                <span class="text-gray-500">Draft</span>
+              {/if}
+            {/if}
           </CardTitle>
         </CardHeader>
         <CardContent>

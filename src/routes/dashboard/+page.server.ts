@@ -72,13 +72,21 @@ export const load: PageServerLoad = async ({ locals }) => {
     ])
   );
 
+  const submittedFeedback = await db
+    .select({ toUserId: feedback.toUserId })
+    .from(feedback)
+    .where(eq(feedback.fromUserId, locals.user.id));
+
+  const submittedFeedbackSet = new Set(submittedFeedback.map((f) => f.toUserId));
+
   return {
     user: locals.user,
     hasRequests,
     receivedRequests,
     users: selectableUsers,
     groups: groupsWithQuestions,
-    drafts: draftsMap
+    drafts: draftsMap,
+    submittedFeedback: submittedFeedbackSet
   };
 };
 
