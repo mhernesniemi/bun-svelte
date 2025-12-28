@@ -21,8 +21,10 @@
       type="button"
       class={cn(
         "h-8 w-8 rounded-full border text-sm transition",
-        disabled && !selected && "cursor-not-allowed border-muted bg-muted text-muted-foreground",
-        selected && "border-primary bg-primary text-primary-foreground opacity-50"
+        disabled && "cursor-not-allowed",
+        disabled && !selected && "border-muted bg-muted text-muted-foreground",
+        selected && disabled && "opacity-50",
+        selected && "border-primary bg-primary text-primary-foreground"
       )}
       {disabled}
       role="radio"
