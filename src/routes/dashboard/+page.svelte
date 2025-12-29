@@ -2,6 +2,8 @@
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
   import { toast } from "svelte-sonner";
+  import { blur, crossfade, draw, fade, fly, scale, slide } from "svelte/transition";
+  import { expoInOut } from "svelte/easing";
   import { Heading } from "$lib/components/ui/heading";
   import { Button } from "$lib/components/ui/button";
   import { Card, CardHeader, CardTitle, CardContent } from "$lib/components/ui/card";
@@ -179,76 +181,82 @@
         </Tabs.Root>
       </div>
 
-      <Card
-        class="rounded-2xl border-0 bg-card/50 shadow-lg ring-1 ring-border/30 backdrop-blur supports-backdrop-filter:bg-card/40"
-      >
-        <CardHeader>
-          <CardTitle class="flex items-center justify-between gap-2">
-            <span>Give Feedback to {getUserName(toUserId)}</span>
-            {#if toUserId !== null}
-              {#if isFeedbackSubmitted}
-                <span class="text-green-500">Completed</span>
-              {:else if hasDraftContent}
-                <span class="text-gray-500">Draft</span>
-              {/if}
-            {/if}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form
-            bind:this={autosaveForm}
-            method="POST"
-            action="?/autosave"
-            use:enhance={() => {
-              return () => {};
-            }}
-            class="hidden"
+      {#key toUserId}
+        <div in:fly={{ y: 10, duration: 400, easing: expoInOut }}>
+          <Card
+            class="rounded-2xl border-0 bg-card/50 shadow-lg ring-1 ring-border/30 backdrop-blur supports-backdrop-filter:bg-card/40"
           >
-            <input type="hidden" name="toUserId" bind:value={toUserId} />
-            <input type="hidden" name="groups" value={buildPayload()} />
-          </form>
-          <form
-            method="POST"
-            action="?/createFeedback"
-            use:enhance={() =>
-              async ({ result, update }) => {
-                await update();
-                if (result.type === "success") {
-                  await invalidateAll();
-                  toast.success(`Feedback submitted`);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                } else if (result.type === "failure" && result.data?.error) {
-                  const errorMessage =
-                    typeof result.data.error === "string" ? result.data.error : "An error occurred";
-                  toast.error(errorMessage);
-                }
-              }}
-            class="space-y-6"
-          >
-            <input type="hidden" name="toUserId" value={toUserId ?? ""} />
-            <input type="hidden" name="groups" value={buildPayload()} />
-
-            <div class="space-y-6">
-              {#each data.groups as group (group.id)}
-                <ValuationGroupCard
-                  {group}
-                  groupAnswers={(toUserId ? answers[toUserId]?.[group.id] : null) ?? {
-                    questionAnswers: {},
-                    comment: ""
+            <CardHeader>
+              <CardTitle class="flex items-center justify-between gap-2">
+                <span>Give Feedback to {getUserName(toUserId)}</span>
+                {#if toUserId !== null}
+                  {#if isFeedbackSubmitted}
+                    <span class="text-green-500">Completed</span>
+                  {:else if hasDraftContent}
+                    <span class="text-gray-500">Draft</span>
+                  {/if}
+                {/if}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                bind:this={autosaveForm}
+                method="POST"
+                action="?/autosave"
+                use:enhance={() => {
+                  return () => {};
+                }}
+                class="hidden"
+              >
+                <input type="hidden" name="toUserId" bind:value={toUserId} />
+                <input type="hidden" name="groups" value={buildPayload()} />
+              </form>
+              <form
+                method="POST"
+                action="?/createFeedback"
+                use:enhance={() =>
+                  async ({ result, update }) => {
+                    await update();
+                    if (result.type === "success") {
+                      await invalidateAll();
+                      toast.success(`Feedback submitted`);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    } else if (result.type === "failure" && result.data?.error) {
+                      const errorMessage =
+                        typeof result.data.error === "string"
+                          ? result.data.error
+                          : "An error occurred";
+                      toast.error(errorMessage);
+                    }
                   }}
-                  onQuestionRatingChange={updateQuestionRating}
-                  onGroupCommentChange={updateGroupComment}
-                  disabled={isFeedbackSubmitted}
-                />
-              {/each}
-            </div>
+                class="space-y-6"
+              >
+                <input type="hidden" name="toUserId" value={toUserId ?? ""} />
+                <input type="hidden" name="groups" value={buildPayload()} />
 
-            <div class="flex items-center justify-end">
-              <Button type="submit" disabled={isFeedbackSubmitted}>Submit</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                <div class="space-y-6">
+                  {#each data.groups as group (group.id)}
+                    <ValuationGroupCard
+                      {group}
+                      groupAnswers={(toUserId ? answers[toUserId]?.[group.id] : null) ?? {
+                        questionAnswers: {},
+                        comment: ""
+                      }}
+                      onQuestionRatingChange={updateQuestionRating}
+                      onGroupCommentChange={updateGroupComment}
+                      disabled={isFeedbackSubmitted}
+                    />
+                  {/each}
+                </div>
+
+                <div class="flex items-center justify-end">
+                  <Button type="submit" disabled={isFeedbackSubmitted}>Submit</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      {/key}
     {/if}
   </div>
 </div>
