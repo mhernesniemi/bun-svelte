@@ -31,6 +31,7 @@
     "@tailwindcss/vite": "^4.1.17",
     "@types/node": "^22",
     "bits-ui": "^2.14.4",
+    "bun-types": "^1.3.5",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.0",
     "eslint": "^9.39.1",
