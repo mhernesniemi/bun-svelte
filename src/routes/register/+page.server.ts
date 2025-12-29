@@ -20,7 +20,7 @@ export const actions: Actions = {
     if (existing) return fail(400, { error: "Username already exists" });
 
     const user = await createUser(username, password);
-    setSession(event, user.id);
+    await setSession(event, user.id);
     throw redirect(303, "/dashboard");
   }
 };

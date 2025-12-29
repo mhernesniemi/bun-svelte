@@ -21,7 +21,7 @@ export const actions: Actions = {
     const ok = await verifyPassword(password, user.password);
     if (!ok) return fail(400, { error: "Invalid username or password" });
 
-    setSession(event, user.id);
+    await setSession(event, user.id);
     throw redirect(303, "/dashboard");
   }
 };
