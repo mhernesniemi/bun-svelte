@@ -35,12 +35,14 @@
     );
   });
 
+  // Set the first received request as the default selected user
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
     }
   });
 
+  // Load draft answers from server data into local state
   $effect(() => {
     if (!data.drafts || data.receivedRequests.length === 0) return;
 
@@ -121,15 +123,10 @@
 <div
   class="min-h-screen w-full bg-linear-to-b from-background via-background to-muted/30 px-4 py-8"
 >
-  <div class="mx-auto max-w-4xl space-y-6">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+  <div class="mx-auto max-w-4xl">
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div class="min-w-0">
         <Heading level={1} class="text-2xl sm:text-3xl">Colleague Feedback</Heading>
-        <p class="mt-1 text-sm text-muted-foreground">
-          {data.hasRequests
-            ? "Give and receive anonymous feedback from your colleagues."
-            : "Select colleagues you want feedback from to get started."}
-        </p>
       </div>
       <div class="flex items-center gap-3">
         <div
@@ -161,7 +158,7 @@
       </Card>
     {:else}
       <div
-        class="sticky top-0 z-50 space-y-2 bg-background/95 pb-2 backdrop-blur supports-backdrop-filter:bg-background/80"
+        class="sticky top-0 z-50 space-y-2 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80"
       >
         <Tabs.Root
           value={toUserId?.toString() ?? ""}

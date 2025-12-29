@@ -28,7 +28,7 @@
     <RadioGroup.Item
       value={grade.toString()}
       class={cn(
-        "flex h-8 w-8 items-center justify-center rounded-full border text-sm transition outline-none",
+        "flex h-8 w-8 items-center justify-center rounded-full border bg-black text-sm transition outline-none",
         "focus-visible:ring-[3px] focus-visible:ring-ring/80",
         "disabled:cursor-not-allowed",
         "disabled:data-[state=unchecked]:border-muted disabled:data-[state=unchecked]:bg-muted disabled:data-[state=unchecked]:text-muted-foreground",

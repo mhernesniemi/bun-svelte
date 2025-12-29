@@ -8,6 +8,6 @@
 <TabsPrimitive.List
   bind:ref
   data-slot="tabs-list"
-  class={cn("items-center rounded-md p-1 text-muted-foreground", className)}
+  class={cn("items-center rounded-md py-2 text-muted-foreground", className)}
   {...restProps}
 />
