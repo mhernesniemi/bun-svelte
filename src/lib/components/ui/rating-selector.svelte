@@ -14,7 +14,7 @@
   const options = $derived(Array.from({ length: max }, (_, i) => i + 1));
 </script>
 
-<div class={cn("flex items-center justify-between gap-2", className)} role="radiogroup">
+<div class={cn("flex items-center justify-between gap-3", className)} role="radiogroup">
   {#each options as grade}
     {@const selected = value === grade}
     <button

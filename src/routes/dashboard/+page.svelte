@@ -179,7 +179,7 @@
             <span>Give Feedback to {getUserName(toUserId)}</span>
             {#if toUserId !== null}
               {#if isFeedbackSubmitted}
-                <span class="text-green-600">Submitted</span>
+                <span class="text-green-500">Completed</span>
               {:else if data.drafts.has(toUserId)}
                 <span class="text-gray-500">Draft</span>
               {/if}
