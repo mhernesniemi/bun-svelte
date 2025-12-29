@@ -149,7 +149,7 @@ export const actions: Actions = {
     for (const g of groups) {
       for (const q of g.questions) {
         if (!Number.isFinite(q.rating) || q.rating < 1 || q.rating > 5) {
-          return fail(400, { error: "Please answer all questions with a rating from 1 to 5." });
+          return fail(400, { error: "Please answer all questions." });
         }
       }
     }

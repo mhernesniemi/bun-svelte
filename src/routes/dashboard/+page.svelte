@@ -18,7 +18,6 @@
 
   let toUserId = $state<number | null>(null);
   let answers = $state<Record<number, GroupAnswersState>>({});
-  let error = $state<string | null>(null);
   let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
   let autosaveForm = $state<HTMLFormElement | null>(null);
 
@@ -35,30 +34,10 @@
     );
   });
 
-  const areAllQuestionsAnswered = $derived.by(() => {
-    if (toUserId === null) return false;
-    const userAnswers = answers[toUserId];
-    if (!userAnswers) return false;
-
-    for (const group of data.groups) {
-      for (const question of group.questions) {
-        const rating = userAnswers[group.id]?.questionAnswers[question.id];
-        if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-          return false;
-        }
-      }
-    }
-    return true;
-  });
-
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
     }
-  });
-
-  $effect(() => {
-    error = form?.error ?? null;
   });
 
   $effect(() => {
@@ -236,18 +215,14 @@
                   await invalidateAll();
                   toast.success(`Feedback submitted`);
                   window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (result.type === "failure" && result.data?.error) {
+                  const errorMessage =
+                    typeof result.data.error === "string" ? result.data.error : "An error occurred";
+                  toast.error(errorMessage);
                 }
               }}
             class="space-y-6"
           >
-            {#if error}
-              <div
-                class="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
-              >
-                {error}
-              </div>
-            {/if}
-
             <input type="hidden" name="toUserId" value={toUserId ?? ""} />
             <input type="hidden" name="groups" value={buildPayload()} />
 
@@ -267,9 +242,7 @@
             </div>
 
             <div class="flex items-center justify-end">
-              <Button type="submit" disabled={isFeedbackSubmitted || !areAllQuestionsAnswered}
-                >Submit</Button
-              >
+              <Button type="submit" disabled={isFeedbackSubmitted}>Submit</Button>
             </div>
           </form>
         </CardContent>
