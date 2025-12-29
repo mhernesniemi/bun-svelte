@@ -6,7 +6,13 @@
   import { expoInOut } from "svelte/easing";
   import { Heading } from "$lib/components/ui/heading";
   import { Button } from "$lib/components/ui/button";
-  import { Card, CardHeader, CardTitle, CardContent } from "$lib/components/ui/card";
+  import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardContent,
+    CardDescription
+  } from "$lib/components/ui/card";
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import FeedbackRequestSelection from "@/components/feedback/feedback-request-selection.svelte";
   import ValuationGroupCard from "@/components/feedback/valuation-group-card.svelte";
@@ -173,7 +179,12 @@
             class="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto bg-transparent"
           >
             {#each data.receivedRequests as r (r.id)}
-              <Tabs.Trigger value={r.userId.toString()}>
+              <Tabs.Trigger
+                value={r.userId.toString()}
+                class={data.submittedFeedback.has(r.userId)
+                  ? "text-green-500 hover:text-green-400 data-[state=active]:text-green-500"
+                  : ""}
+              >
                 {r.username}
               </Tabs.Trigger>
             {/each}
@@ -193,10 +204,13 @@
                   {#if isFeedbackSubmitted}
                     <span class="text-green-500">Completed</span>
                   {:else if hasDraftContent}
-                    <span class="text-gray-500">Draft</span>
+                    <span class="text-muted-foreground">Draft</span>
                   {/if}
                 {/if}
               </CardTitle>
+              <CardDescription>
+                Provide feedback to {getUserName(toUserId)} on their performance and areas for improvement.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form
