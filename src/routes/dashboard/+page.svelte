@@ -5,6 +5,7 @@
   import { Heading } from "$lib/components/ui/heading";
   import { Button } from "$lib/components/ui/button";
   import { Card, CardHeader, CardTitle, CardContent } from "$lib/components/ui/card";
+  import * as Tabs from "$lib/components/ui/tabs/index.js";
   import FeedbackRequestSelection from "@/components/feedback/feedback-request-selection.svelte";
   import ValuationGroupCard from "@/components/feedback/valuation-group-card.svelte";
   import type { PageData, ActionData } from "./$types";
@@ -162,19 +163,23 @@
       <div
         class="sticky top-0 z-50 space-y-2 bg-background/95 pb-2 backdrop-blur supports-backdrop-filter:bg-background/80"
       >
-        <div class="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto">
-          {#each data.receivedRequests as r (r.id)}
-            <Button
-              type="button"
-              variant={toUserId === r.userId ? "default" : "outline"}
-              size="sm"
-              class="shrink-0"
-              onclick={() => (toUserId = r.userId)}
-            >
-              {r.username}
-            </Button>
-          {/each}
-        </div>
+        <Tabs.Root
+          value={toUserId?.toString() ?? ""}
+          onValueChange={(value) => {
+            toUserId = value ? Number(value) : null;
+          }}
+          class="w-full"
+        >
+          <Tabs.List
+            class="flex h-auto w-full flex-nowrap justify-start gap-1 overflow-x-auto bg-transparent"
+          >
+            {#each data.receivedRequests as r (r.id)}
+              <Tabs.Trigger value={r.userId.toString()}>
+                {r.username}
+              </Tabs.Trigger>
+            {/each}
+          </Tabs.List>
+        </Tabs.Root>
       </div>
 
       <Card

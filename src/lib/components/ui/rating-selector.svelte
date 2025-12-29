@@ -24,7 +24,7 @@
     <label
       for={radioId}
       class={cn(
-        "flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border text-sm transition",
+        "flex h-8 w-8 items-center justify-center rounded-full border text-sm transition",
         disabled && "cursor-not-allowed",
         disabled && !selected && "border-muted bg-muted text-muted-foreground",
         selected && disabled && "opacity-50",
