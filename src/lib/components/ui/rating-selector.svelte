@@ -24,7 +24,8 @@
         disabled && "cursor-not-allowed",
         disabled && !selected && "border-muted bg-muted text-muted-foreground",
         selected && disabled && "opacity-50",
-        selected && "border-primary bg-primary text-primary-foreground"
+        selected && "border-primary",
+        !selected && !disabled && "hover:border-primary/20"
       )}
       {disabled}
       role="radio"

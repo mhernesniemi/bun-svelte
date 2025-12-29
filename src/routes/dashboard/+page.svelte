@@ -24,6 +24,17 @@
 
   const isFeedbackSubmitted = $derived(toUserId !== null && data.submittedFeedback.has(toUserId));
 
+  const hasDraftContent = $derived.by(() => {
+    if (toUserId === null) return false;
+    const userAnswers = answers[toUserId];
+    if (!userAnswers) return false;
+    return Object.values(userAnswers).some(
+      (group) =>
+        Object.values(group.questionAnswers).some((rating) => rating > 0) ||
+        (group.comment && group.comment.trim())
+    );
+  });
+
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
@@ -180,7 +191,7 @@
             {#if toUserId !== null}
               {#if isFeedbackSubmitted}
                 <span class="text-green-500">Completed</span>
-              {:else if data.drafts.has(toUserId)}
+              {:else if hasDraftContent}
                 <span class="text-gray-500">Draft</span>
               {/if}
             {/if}
