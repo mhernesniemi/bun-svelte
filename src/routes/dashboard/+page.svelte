@@ -35,6 +35,22 @@
     );
   });
 
+  const areAllQuestionsAnswered = $derived.by(() => {
+    if (toUserId === null) return false;
+    const userAnswers = answers[toUserId];
+    if (!userAnswers) return false;
+
+    for (const group of data.groups) {
+      for (const question of group.questions) {
+        const rating = userAnswers[group.id]?.questionAnswers[question.id];
+        if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+          return false;
+        }
+      }
+    }
+    return true;
+  });
+
   $effect(() => {
     if (toUserId === null && data.receivedRequests.length > 0) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
@@ -218,7 +234,8 @@
                 await update();
                 if (result.type === "success") {
                   await invalidateAll();
-                  toast.success(`Feedback has been submitted for ${getUserName(toUserId)}`);
+                  toast.success(`Feedback submitted`);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }
               }}
             class="space-y-6"
@@ -250,7 +267,9 @@
             </div>
 
             <div class="flex items-center justify-end">
-              <Button type="submit" disabled={isFeedbackSubmitted}>Submit</Button>
+              <Button type="submit" disabled={isFeedbackSubmitted || !areAllQuestionsAnswered}
+                >Submit</Button
+              >
             </div>
           </form>
         </CardContent>

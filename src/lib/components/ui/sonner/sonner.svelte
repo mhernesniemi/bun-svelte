@@ -12,10 +12,10 @@
 </script>
 
 <Sonner
-  theme={mode.current}
+  theme="dark"
   class="toaster group"
   richColors
-  style="--normal-bg: var(--color-popover); --normal-text: var(--color-popover-foreground); --normal-border: var(--color-border); --success-bg: hsl(142 70% 92%); --success-text: hsl(142 50% 20%); --success-border: hsl(142 40% 80%); --error-bg: hsl(0 85% 94%); --error-text: hsl(0 55% 25%); --error-border: hsl(0 60% 82%);"
+  style="--normal-bg: hsl(240 6% 10%); --normal-text: hsl(0 0% 95%); --normal-border: hsl(240 4% 20%); --success-bg: hsl(142 40% 12%); --success-text: hsl(142 70% 75%); --success-border: hsl(142 30% 25%); --error-bg: hsl(0 50% 12%); --error-text: hsl(0 85% 75%); --error-border: hsl(0 40% 25%); --warning-bg: hsl(38 50% 12%); --warning-text: hsl(38 90% 70%); --warning-border: hsl(38 40% 25%); --info-bg: hsl(210 50% 12%); --info-text: hsl(210 90% 75%); --info-border: hsl(210 40% 25%); font-weight: 700;"
   {...restProps}
   >{#snippet loadingIcon()}
     <Loader2Icon class="size-4 animate-spin" />
