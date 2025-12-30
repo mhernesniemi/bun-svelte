@@ -1,6 +1,7 @@
 <script lang="ts" module>
-  import { cn, type WithElementRef } from "$lib/utils.js";
+  import { cn } from "$lib/utils.js";
   import type { HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
+  import { type WithElementRef } from "bits-ui";
   import { type VariantProps, tv } from "tailwind-variants";
 
   export const buttonVariants = tv({
@@ -42,8 +43,6 @@
 </script>
 
 <script lang="ts">
-  import { resolve } from "$app/paths";
-
   let {
     class: className,
     variant = "default",
@@ -55,15 +54,15 @@
     children,
     ...restProps
   }: ButtonProps = $props();
-
 </script>
 
 {#if href}
+  <!-- eslint-disable svelte/no-navigation-without-resolve -- Generic component, caller handles URL resolution -->
   <a
     bind:this={ref}
     data-slot="button"
     class={cn(buttonVariants({ variant, size }), className)}
-    href={disabled ? resolve(href) : resolve(href)}
+    href={disabled ? undefined : href}
     aria-disabled={disabled}
     role={disabled ? "link" : undefined}
     tabindex={disabled ? -1 : undefined}
@@ -71,6 +70,7 @@
   >
     {@render children?.()}
   </a>
+  <!-- eslint-enable svelte/no-navigation-without-resolve -->
 {:else}
   <button
     bind:this={ref}
