@@ -12,7 +12,14 @@
     disabled?: boolean;
   };
 
-  let { class: className = "", questionId, questionText, value, onChange, disabled = false }: Props = $props();
+  let {
+    class: className = "",
+    questionId,
+    questionText,
+    value,
+    onChange,
+    disabled = false
+  }: Props = $props();
   const labelId = $derived(`rating-label-${questionId}`);
 </script>
 

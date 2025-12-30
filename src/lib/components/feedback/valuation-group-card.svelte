@@ -17,7 +17,13 @@
     disabled?: boolean;
   };
 
-  let { group, groupAnswers, onQuestionRatingChange, onGroupCommentChange, disabled = false }: Props = $props();
+  let {
+    group,
+    groupAnswers,
+    onQuestionRatingChange,
+    onGroupCommentChange,
+    disabled = false
+  }: Props = $props();
 
   let commentValue = $state("");
 
