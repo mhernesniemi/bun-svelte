@@ -13,21 +13,21 @@
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import type { PageData, ActionData } from "./$types";
+  import { SvelteSet } from "svelte/reactivity";
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
+
   let newGroupTitle = $state("");
   let newQuestionText = $state<Record<number, string>>({});
-  let expanded = $state<Set<number>>(new Set());
-  let error = $state<string | null>(null);
-
-  $effect(() => {
-    error = (form as any)?.error ?? null;
-  });
+  let expanded = new SvelteSet<number>();
+  let error = $derived(form?.error ?? null);
 
   function toggle(id: number) {
-    const next = new Set(expanded);
-    next.has(id) ? next.delete(id) : next.add(id);
-    expanded = next;
+    if (expanded.has(id)) {
+      expanded.delete(id);
+    } else {
+      expanded.add(id);
+    }
   }
 </script>
 

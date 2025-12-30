@@ -21,11 +21,7 @@
   let { users, form }: Props = $props();
 
   let selected = $state<number[]>([]);
-  let error = $state<string | null>(null);
-
-  $effect(() => {
-    error = form?.error ?? null;
-  });
+  let error = $derived(form?.error ?? null);
 </script>
 
 <Card

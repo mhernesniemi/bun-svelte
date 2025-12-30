@@ -11,14 +11,12 @@
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
-  import type { ActionData, PageData } from "./$types";
+  import type { ActionData } from "./$types";
+  import { resolve } from "$app/paths";
 
-  let { form }: { data: PageData; form: ActionData } = $props();
+  let { form }: { form: ActionData } = $props();
 
-  let error = $state<string | null>(null);
-  $effect(() => {
-    error = form?.error ?? null;
-  });
+  let error = $derived(form?.error ?? null);
 </script>
 
 <div
@@ -67,7 +65,7 @@
 
           <div class="text-center text-sm text-muted-foreground">
             Don't have an account?
-            <a href="/register" class="text-primary underline-offset-4 hover:underline">Register</a>
+            <a href={resolve("/register")} class="text-primary underline-offset-4 hover:underline">Register</a>
           </div>
         </form>
       </CardContent>

@@ -24,7 +24,7 @@
   orientation="horizontal"
   class={cn("flex items-center justify-between gap-4", className)}
 >
-  {#each options as grade}
+  {#each options as grade (grade)}
     <RadioGroup.Item
       value={grade.toString()}
       class={cn(

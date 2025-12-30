@@ -42,6 +42,8 @@
 </script>
 
 <script lang="ts">
+  import { resolve } from "$app/paths";
+
   let {
     class: className,
     variant = "default",
@@ -53,6 +55,7 @@
     children,
     ...restProps
   }: ButtonProps = $props();
+
 </script>
 
 {#if href}
@@ -60,7 +63,7 @@
     bind:this={ref}
     data-slot="button"
     class={cn(buttonVariants({ variant, size }), className)}
-    href={disabled ? undefined : href}
+    href={disabled ? resolve(href) : resolve(href)}
     aria-disabled={disabled}
     role={disabled ? "link" : undefined}
     tabindex={disabled ? -1 : undefined}

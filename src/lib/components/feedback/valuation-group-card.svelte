@@ -25,16 +25,9 @@
     disabled = false
   }: Props = $props();
 
-  let commentValue = $state("");
-
-  $effect(() => {
-    commentValue = groupAnswers.comment;
-  });
-
   function handleCommentInput(e: Event) {
     if (disabled) return;
     const value = (e.currentTarget as HTMLTextAreaElement).value;
-    commentValue = value;
     onGroupCommentChange(group.id, value);
   }
 </script>
@@ -58,7 +51,7 @@
     <Label for={`comment-${group.id}`}>Group Comment (optional)</Label>
     <Textarea
       id={`comment-${group.id}`}
-      bind:value={commentValue}
+      value={groupAnswers.comment}
       oninput={handleCommentInput}
       {disabled}
       rows={3}

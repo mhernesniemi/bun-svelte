@@ -2,7 +2,7 @@
   import { enhance } from "$app/forms";
   import { invalidateAll } from "$app/navigation";
   import { toast } from "svelte-sonner";
-  import { blur, crossfade, draw, fade, fly, scale, slide } from "svelte/transition";
+  import { fly } from "svelte/transition";
   import { expoInOut } from "svelte/easing";
   import { Heading } from "$lib/components/ui/heading";
   import { Button } from "$lib/components/ui/button";
@@ -150,7 +150,7 @@
     </div>
 
     {#if !data.hasRequests}
-      <FeedbackRequestSelection users={data.users} form={form as any} />
+      <FeedbackRequestSelection users={data.users} form={form ?? undefined} />
     {:else if data.receivedRequests.length === 0}
       <Card
         class="rounded-2xl border-0 bg-card/50 shadow-lg ring-1 ring-border/30 backdrop-blur supports-backdrop-filter:bg-card/40"
