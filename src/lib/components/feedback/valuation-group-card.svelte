@@ -2,7 +2,7 @@
   import { Heading } from "$lib/components/ui/heading";
   import { Label } from "$lib/components/ui/label";
   import { Textarea } from "$lib/components/ui/textarea";
-  import QuestionRatingRow from "./question-rating-row.svelte";
+  import RatingSelector from "@/components/ui/rating-selector.svelte";
 
   type Group = { id: number; title: string; questions: { id: number; questionText: string }[] };
 
@@ -37,13 +37,19 @@
 
   <div class="space-y-5 divide-y">
     {#each group.questions as q (q.id)}
-      <QuestionRatingRow
-        questionId={q.id}
-        questionText={q.questionText}
-        value={groupAnswers.questionAnswers[q.id] ?? null}
-        onChange={(next) => onQuestionRatingChange(group.id, q.id, next)}
-        {disabled}
-      />
+      {@const labelId = `rating-label-${q.id}`}
+      {@const ratingValue = groupAnswers.questionAnswers[q.id] ?? null}
+      <div class="grid pb-5 sm:grid-cols-[1fr_320px] sm:items-center">
+        <div class="min-w-0">
+          <Label for={labelId} class="leading-snug">{q.questionText}</Label>
+        </div>
+        <RatingSelector
+          value={ratingValue}
+          onValueChange={(next) => onQuestionRatingChange(group.id, q.id, next)}
+          {disabled}
+          class="justify-end"
+        />
+      </div>
     {/each}
   </div>
 

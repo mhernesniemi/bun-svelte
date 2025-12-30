@@ -233,7 +233,6 @@
                     await update();
                     if (result.type === "success") {
                       await invalidateAll();
-                      toast.success(`Feedback submitted`);
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     } else if (result.type === "failure" && result.data?.error) {
                       const errorMessage =
