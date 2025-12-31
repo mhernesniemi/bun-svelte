@@ -4,9 +4,7 @@ import { getUserById } from "./auth";
 
 const COOKIE_NAME = "session";
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "default-secret-key-change-in-production-min-32-chars"
-);
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function getSessionUser(event: RequestEvent) {
   const token = event.cookies.get(COOKIE_NAME);

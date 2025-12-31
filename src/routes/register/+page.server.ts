@@ -14,7 +14,7 @@ export const actions: Actions = {
     const password = data.get("password")?.toString();
 
     if (!username || !password) return fail(400, { error: "Username and password are required" });
-    if (password.length < 6) return fail(400, { error: "Password must be at least 6 characters" });
+    if (password.length < 8) return fail(400, { error: "Password must be at least 8 characters" });
 
     const existing = await getUserByUsername(username);
     if (existing) return fail(400, { error: "Username already exists" });

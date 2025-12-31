@@ -14,7 +14,7 @@ import {
 } from "@/server/db/schema";
 import { env } from "$env/dynamic/private";
 
-const ADMIN_USER = env.ADMIN_USER || "zernobillyguy@gmail.com";
+const ADMIN_USER = env.ADMIN_USER;
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (!locals.user) throw redirect(303, "/login");
@@ -81,14 +81,20 @@ export const load: PageServerLoad = async ({ locals }) => {
     .where(eq(feedbackDrafts.fromUserId, locals.user.id));
 
   const draftsMap = new Map(
-    drafts.map((d) => [
-      d.toUserId,
-      JSON.parse(d.groups) as Array<{
-        groupId: number;
-        questions: Array<{ questionId: number; rating: number }>;
-        comment?: string;
-      }>
-    ])
+    drafts.map((d) => {
+      try {
+        return [
+          d.toUserId,
+          JSON.parse(d.groups) as Array<{
+            groupId: number;
+            questions: Array<{ questionId: number; rating: number }>;
+            comment?: string;
+          }>
+        ];
+      } catch {
+        return [d.toUserId, []];
+      }
+    })
   );
 
   const submittedFeedback = await db
@@ -136,16 +142,21 @@ export const actions: Actions = {
       .limit(1);
     if (existing) return fail(400, { error: "Selection already saved" });
 
-    await db.transaction(async (tx) => {
-      await tx.insert(feedbackRequests).values(
-        unique.map((requestedUserId) => ({
-          userId: event.locals.user!.id,
-          requestedUserId
-        }))
-      );
-    });
+    try {
+      await db.transaction(async (tx) => {
+        await tx.insert(feedbackRequests).values(
+          unique.map((requestedUserId) => ({
+            userId: event.locals.user!.id,
+            requestedUserId
+          }))
+        );
+      });
 
-    return { ok: true };
+      return { ok: true };
+    } catch (error) {
+      console.error("Error creating requests:", error);
+      return fail(500, { error: "Failed to save selection. Please try again." });
+    }
   },
 
   createFeedback: async (event) => {
@@ -178,72 +189,82 @@ export const actions: Actions = {
       }
     }
 
-    await db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(feedback)
-        .values({ fromUserId: userId, toUserId })
-        .returning();
+    try {
+      await db.transaction(async (tx) => {
+        const [created] = await tx
+          .insert(feedback)
+          .values({ fromUserId: userId, toUserId })
+          .returning();
 
-      for (const g of groups) {
-        for (const q of g.questions) {
-          await tx.insert(valuationAnswers).values({
-            feedbackId: created.id,
-            questionId: q.questionId,
-            rating: q.rating
-          });
+        for (const g of groups) {
+          for (const q of g.questions) {
+            await tx.insert(valuationAnswers).values({
+              feedbackId: created.id,
+              questionId: q.questionId,
+              rating: q.rating
+            });
+          }
+          if (g.comment?.trim()) {
+            await tx.insert(valuationGroupAnswers).values({
+              feedbackId: created.id,
+              groupId: g.groupId,
+              comment: g.comment.trim()
+            });
+          }
         }
-        if (g.comment?.trim()) {
-          await tx.insert(valuationGroupAnswers).values({
-            feedbackId: created.id,
-            groupId: g.groupId,
-            comment: g.comment.trim()
-          });
-        }
-      }
-    });
+      });
 
-    return { ok: true };
+      return { ok: true };
+    } catch (error) {
+      console.error("Error creating feedback:", error);
+      return fail(500, { error: "Failed to save feedback. Please try again." });
+    }
   },
 
   autosave: async (event) => {
     if (!event.locals.user) return fail(401, { error: "Unauthorized" });
 
-    const data = await event.request.formData();
-    const toUserId = Number(data.get("toUserId")?.toString());
-    const groupsRaw = data.get("groups")?.toString();
-
-    if (!Number.isFinite(toUserId) || !groupsRaw) return fail(400, { error: "Invalid payload" });
-
     try {
-      JSON.parse(groupsRaw);
-    } catch {
-      return fail(400, { error: "Invalid payload" });
-    }
+      const data = await event.request.formData();
+      const toUserId = Number(data.get("toUserId")?.toString());
+      const groupsRaw = data.get("groups")?.toString();
 
-    const [existing] = await db
-      .select()
-      .from(feedbackDrafts)
-      .where(
-        and(
-          eq(feedbackDrafts.fromUserId, event.locals.user.id),
-          eq(feedbackDrafts.toUserId, toUserId)
+      if (!Number.isFinite(toUserId) || !groupsRaw) return fail(400, { error: "Invalid payload" });
+
+      try {
+        JSON.parse(groupsRaw);
+      } catch {
+        return fail(400, { error: "Invalid payload" });
+      }
+
+      const [existing] = await db
+        .select()
+        .from(feedbackDrafts)
+        .where(
+          and(
+            eq(feedbackDrafts.fromUserId, event.locals.user.id),
+            eq(feedbackDrafts.toUserId, toUserId)
+          )
         )
-      )
-      .limit(1);
+        .limit(1);
 
-    if (existing) {
-      await db
-        .update(feedbackDrafts)
-        .set({ groups: groupsRaw, updatedAt: new Date() })
-        .where(eq(feedbackDrafts.id, existing.id));
-    } else {
-      await db.insert(feedbackDrafts).values({
-        fromUserId: event.locals.user.id,
-        toUserId,
-        groups: groupsRaw
-      });
+      if (existing) {
+        await db
+          .update(feedbackDrafts)
+          .set({ groups: groupsRaw, updatedAt: new Date() })
+          .where(eq(feedbackDrafts.id, existing.id));
+      } else {
+        await db.insert(feedbackDrafts).values({
+          fromUserId: event.locals.user.id,
+          toUserId,
+          groups: groupsRaw
+        });
+      }
+
+      return { ok: true };
+    } catch (error) {
+      console.error("Error autosaving:", error);
+      return fail(500, { error: "Failed to save draft" });
     }
-
-    return { ok: true };
   }
 };

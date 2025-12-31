@@ -5,7 +5,7 @@ import { db } from "@/server/db";
 import { valuationQuestionGroups, valuationQuestions } from "@/server/db/schema";
 import { env } from "$env/dynamic/private";
 
-const ADMIN_USER = env.ADMIN_USER || "zernobillyguy@gmail.com";
+const ADMIN_USER = env.ADMIN_USER;
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (!locals.user) throw redirect(303, "/login");
