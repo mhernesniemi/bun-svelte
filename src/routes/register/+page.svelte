@@ -25,7 +25,6 @@
   <div class="w-full max-w-md space-y-6">
     <div class="text-center">
       <Heading level={1}>Colleague Feedback</Heading>
-      <p class="mt-2 text-sm text-muted-foreground">Create an account to get started</p>
     </div>
 
     <Card
@@ -65,7 +64,9 @@
 
           <div class="text-center text-sm text-muted-foreground">
             Already have an account?
-            <a href={resolve("/login")} class="text-primary underline-offset-4 hover:underline">Login</a>
+            <a href={resolve("/login")} class="text-primary underline-offset-4 hover:underline"
+              >Login</a
+            >
           </div>
         </form>
       </CardContent>

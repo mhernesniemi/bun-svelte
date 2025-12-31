@@ -95,8 +95,8 @@
   });
 
   function getUserName(userId: number | null) {
-    if (userId === null) return "Unknown";
-    return data.receivedRequests.find((r) => r.userId === userId)?.username ?? "Unknown";
+    if (userId === null) return "...";
+    return data.receivedRequests.find((r) => r.userId === userId)?.username ?? "...";
   }
 
   function buildPayload() {
