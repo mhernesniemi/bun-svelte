@@ -3,12 +3,13 @@ import { asc, eq, and, isNull } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types";
 import { db } from "@/server/db";
 import { valuationQuestionGroups, valuationQuestions } from "@/server/db/schema";
+import { env } from "$env/dynamic/private";
 
-const ADMIN_EMAIL = "zernobillyguy@gmail.com";
+const ADMIN_USER = env.ADMIN_USER || "zernobillyguy@gmail.com";
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (!locals.user) throw redirect(303, "/login");
-  if (locals.user.username !== ADMIN_EMAIL) throw redirect(303, "/dashboard");
+  if (locals.user.username !== ADMIN_USER) throw redirect(303, "/dashboard");
 
   const groups = await db
     .select()
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
   createGroup: async ({ locals, request }) => {
-    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+    if (!locals.user || locals.user.username !== ADMIN_USER)
       return fail(401, { error: "Unauthorized" });
     const data = await request.formData();
     const title = data.get("title")?.toString().trim();
@@ -40,7 +41,7 @@ export const actions: Actions = {
     return { ok: true };
   },
   createQuestion: async ({ locals, request }) => {
-    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+    if (!locals.user || locals.user.username !== ADMIN_USER)
       return fail(401, { error: "Unauthorized" });
     const data = await request.formData();
     const groupId = Number(data.get("groupId")?.toString());
@@ -60,7 +61,7 @@ export const actions: Actions = {
     return { ok: true };
   },
   reorderQuestions: async ({ locals, request }) => {
-    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+    if (!locals.user || locals.user.username !== ADMIN_USER)
       return fail(401, { error: "Unauthorized" });
     const data = await request.formData();
     const questionIdsJson = data.get("questionIds")?.toString();
@@ -84,7 +85,7 @@ export const actions: Actions = {
     return { ok: true };
   },
   updateQuestion: async ({ locals, request }) => {
-    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+    if (!locals.user || locals.user.username !== ADMIN_USER)
       return fail(401, { error: "Unauthorized" });
     const data = await request.formData();
     const questionId = Number(data.get("questionId")?.toString());
@@ -99,7 +100,7 @@ export const actions: Actions = {
     return { ok: true };
   },
   deleteQuestion: async ({ locals, request }) => {
-    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+    if (!locals.user || locals.user.username !== ADMIN_USER)
       return fail(401, { error: "Unauthorized" });
     const data = await request.formData();
     const questionId = Number(data.get("questionId")?.toString());
@@ -113,7 +114,7 @@ export const actions: Actions = {
     return { ok: true };
   },
   deleteGroup: async ({ locals, request }) => {
-    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+    if (!locals.user || locals.user.username !== ADMIN_USER)
       return fail(401, { error: "Unauthorized" });
     const data = await request.formData();
     const groupId = Number(data.get("groupId")?.toString());

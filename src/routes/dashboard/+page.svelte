@@ -168,6 +168,9 @@
           <span class="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
           <span class="max-w-56 truncate">{data.user.username}</span>
         </div>
+        {#if data.isAdmin}
+          <Button href="/admin" variant="outline" size="sm">Admin</Button>
+        {/if}
         <form method="POST" action="/logout">
           <Button type="submit" variant="outline" size="sm">Logout</Button>
         </form>

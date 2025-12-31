@@ -12,6 +12,9 @@ import {
   valuationQuestionGroups,
   valuationQuestions
 } from "@/server/db/schema";
+import { env } from "$env/dynamic/private";
+
+const ADMIN_USER = env.ADMIN_USER || "zernobillyguy@gmail.com";
 
 export const load: PageServerLoad = async ({ locals }) => {
   if (!locals.user) throw redirect(303, "/login");
@@ -51,12 +54,7 @@ export const load: PageServerLoad = async ({ locals }) => {
       const questions = await db
         .select()
         .from(valuationQuestions)
-        .where(
-          and(
-            eq(valuationQuestions.groupId, g.id),
-            isNull(valuationQuestions.deletedAt)
-          )
-        )
+        .where(and(eq(valuationQuestions.groupId, g.id), isNull(valuationQuestions.deletedAt)))
         .orderBy(asc(valuationQuestions.order));
       return { ...g, questions };
     })
@@ -92,7 +90,8 @@ export const load: PageServerLoad = async ({ locals }) => {
     users: selectableUsers,
     groups: groupsWithQuestions,
     drafts: draftsMap,
-    submittedFeedback: submittedFeedbackSet
+    submittedFeedback: submittedFeedbackSet,
+    isAdmin: locals.user.username === ADMIN_USER
   };
 };
 
