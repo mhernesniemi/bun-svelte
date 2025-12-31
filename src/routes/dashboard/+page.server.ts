@@ -1,5 +1,5 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { asc, eq, ne, and, isNull } from "drizzle-orm";
+import { asc, eq, ne, and, isNull, inArray } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types";
 import { db } from "@/server/db";
 import {
@@ -49,16 +49,31 @@ export const load: PageServerLoad = async ({ locals }) => {
     .where(isNull(valuationQuestionGroups.deletedAt))
     .orderBy(asc(valuationQuestionGroups.order));
 
-  const groupsWithQuestions = await Promise.all(
-    groups.map(async (g) => {
-      const questions = await db
-        .select()
-        .from(valuationQuestions)
-        .where(and(eq(valuationQuestions.groupId, g.id), isNull(valuationQuestions.deletedAt)))
-        .orderBy(asc(valuationQuestions.order));
-      return { ...g, questions };
-    })
-  );
+  // Fetch all questions in one query instead of one per group
+  const groupIds = groups.map((g) => g.id);
+  const allQuestions =
+    groupIds.length > 0
+      ? await db
+          .select()
+          .from(valuationQuestions)
+          .where(
+            and(isNull(valuationQuestions.deletedAt), inArray(valuationQuestions.groupId, groupIds))
+          )
+          .orderBy(asc(valuationQuestions.order))
+      : [];
+
+  // Group questions by groupId
+  const questionsByGroupId = new Map<number, typeof allQuestions>();
+  for (const question of allQuestions) {
+    const existing = questionsByGroupId.get(question.groupId) || [];
+    existing.push(question);
+    questionsByGroupId.set(question.groupId, existing);
+  }
+
+  const groupsWithQuestions = groups.map((g) => ({
+    ...g,
+    questions: questionsByGroupId.get(g.id) || []
+  }));
 
   const drafts = await db
     .select()
@@ -113,6 +128,7 @@ export const actions: Actions = {
     const unique = Array.from(new Set(userIds)).filter((n) => Number.isFinite(n));
     if (unique.length !== 5) return fail(400, { error: "Select exactly 5 colleagues" });
 
+    // Check for existing requests before transaction
     const [existing] = await db
       .select()
       .from(feedbackRequests)
@@ -120,12 +136,14 @@ export const actions: Actions = {
       .limit(1);
     if (existing) return fail(400, { error: "Selection already saved" });
 
-    await db.insert(feedbackRequests).values(
-      unique.map((requestedUserId) => ({
-        userId: event.locals.user!.id,
-        requestedUserId
-      }))
-    );
+    await db.transaction(async (tx) => {
+      await tx.insert(feedbackRequests).values(
+        unique.map((requestedUserId) => ({
+          userId: event.locals.user!.id,
+          requestedUserId
+        }))
+      );
+    });
 
     return { ok: true };
   },
@@ -133,6 +151,7 @@ export const actions: Actions = {
   createFeedback: async (event) => {
     if (!event.locals.user) return fail(401, { error: "Unauthorized" });
 
+    const userId = event.locals.user.id;
     const data = await event.request.formData();
     const toUserId = Number(data.get("toUserId")?.toString());
     const groupsRaw = data.get("groups")?.toString();
@@ -159,27 +178,29 @@ export const actions: Actions = {
       }
     }
 
-    const [created] = await db
-      .insert(feedback)
-      .values({ fromUserId: event.locals.user.id, toUserId })
-      .returning();
+    await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(feedback)
+        .values({ fromUserId: userId, toUserId })
+        .returning();
 
-    for (const g of groups) {
-      for (const q of g.questions) {
-        await db.insert(valuationAnswers).values({
-          feedbackId: created.id,
-          questionId: q.questionId,
-          rating: q.rating
-        });
+      for (const g of groups) {
+        for (const q of g.questions) {
+          await tx.insert(valuationAnswers).values({
+            feedbackId: created.id,
+            questionId: q.questionId,
+            rating: q.rating
+          });
+        }
+        if (g.comment?.trim()) {
+          await tx.insert(valuationGroupAnswers).values({
+            feedbackId: created.id,
+            groupId: g.groupId,
+            comment: g.comment.trim()
+          });
+        }
       }
-      if (g.comment?.trim()) {
-        await db.insert(valuationGroupAnswers).values({
-          feedbackId: created.id,
-          groupId: g.groupId,
-          comment: g.comment.trim()
-        });
-      }
-    }
+    });
 
     return { ok: true };
   },
