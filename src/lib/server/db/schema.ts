@@ -40,6 +40,7 @@ export const valuationQuestionGroups = sqliteTable("valuation_question_groups", 
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   order: integer("order").notNull().default(0),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date())
@@ -52,6 +53,7 @@ export const valuationQuestions = sqliteTable("valuation_questions", {
     .references(() => valuationQuestionGroups.id, { onDelete: "cascade" }),
   questionText: text("question_text").notNull(),
   order: integer("order").notNull().default(0),
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date())

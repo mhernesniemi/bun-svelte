@@ -1,5 +1,5 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { asc, eq, ne, and } from "drizzle-orm";
+import { asc, eq, ne, and, isNull } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types";
 import { db } from "@/server/db";
 import {
@@ -43,6 +43,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   const groups = await db
     .select()
     .from(valuationQuestionGroups)
+    .where(isNull(valuationQuestionGroups.deletedAt))
     .orderBy(asc(valuationQuestionGroups.order));
 
   const groupsWithQuestions = await Promise.all(
@@ -50,7 +51,12 @@ export const load: PageServerLoad = async ({ locals }) => {
       const questions = await db
         .select()
         .from(valuationQuestions)
-        .where(eq(valuationQuestions.groupId, g.id))
+        .where(
+          and(
+            eq(valuationQuestions.groupId, g.id),
+            isNull(valuationQuestions.deletedAt)
+          )
+        )
         .orderBy(asc(valuationQuestions.order));
       return { ...g, questions };
     })

@@ -12,7 +12,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
-  import { GripVertical } from "lucide-svelte";
+  import { GripVertical, Edit, Trash2, X, Check } from "lucide-svelte";
   import type { PageData, ActionData } from "./$types";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -23,6 +23,8 @@
   let expanded = new SvelteSet<number>();
   let error = $derived(form?.error ?? null);
   let draggedQuestionIndex = $state<Record<number, number | null>>({});
+  let editingQuestionId = $state<number | null>(null);
+  let editingQuestionText = $state<string>("");
 
   function toggle(id: number) {
     if (expanded.has(id)) {
@@ -70,10 +72,21 @@
 
     draggedQuestionIndex[groupId] = null;
   }
+
+  function startEdit(question: { id: number; questionText: string }) {
+    editingQuestionId = question.id;
+    editingQuestionText = question.questionText;
+  }
+
+  function cancelEdit() {
+    editingQuestionId = null;
+    editingQuestionText = "";
+  }
 </script>
 
 <div class="container mx-auto max-w-4xl space-y-6 p-6">
-  <Heading level={1}>Admin - Valuation Question Groups</Heading>
+  <Heading level={1} class="mb-1">Admin Panel</Heading>
+  <p class="text-sm text-muted-foreground">Manage your valuation questions and groups.</p>
 
   {#if error}
     <div
@@ -132,7 +145,7 @@
               action="?/createQuestion"
               use:enhance={() =>
                 async ({ update }) => (await update(), invalidateAll())}
-              class="space-y-2 rounded-lg border p-4"
+              class="space-y-2"
             >
               <Label for={`question-${group.id}`}>Add Question to Group</Label>
               <div class="flex gap-2">
@@ -154,27 +167,104 @@
             {:else}
               <div class="space-y-2">
                 {#each group.questions as q, index (q.id)}
-                  <div
-                    draggable="true"
-                    role="button"
-                    tabindex="0"
-                    ondragstart={() => dragStart(group.id, index)}
-                    ondragover={(e) => e.preventDefault()}
-                    ondrop={() => drop(group.id, index)}
-                    class="cursor-move rounded-lg border p-3 text-sm transition-opacity {draggedQuestionIndex[
-                      group.id
-                    ] === index
-                      ? 'opacity-50'
-                      : ''}"
-                  >
-                    <div class="flex items-center gap-2">
-                      <GripVertical class="h-4 w-4 text-muted-foreground" />
-                      <span>{q.questionText}</span>
+                  {#if editingQuestionId === q.id}
+                    <form
+                      method="POST"
+                      action="?/updateQuestion"
+                      use:enhance={() =>
+                        async ({ update }) => {
+                          await update();
+                          await invalidateAll();
+                          cancelEdit();
+                        }}
+                      class="rounded-lg border p-3"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Input
+                          bind:value={editingQuestionText}
+                          name="questionText"
+                          class="flex-1"
+                          required
+                        />
+                        <input type="hidden" name="questionId" value={q.id} />
+                        <Button type="submit" size="sm" variant="ghost">
+                          <Check class="h-4 w-4" />
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onclick={cancelEdit}>
+                          <X class="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </form>
+                  {:else}
+                    <div
+                      draggable="true"
+                      role="button"
+                      tabindex="0"
+                      ondragstart={() => dragStart(group.id, index)}
+                      ondragover={(e) => e.preventDefault()}
+                      ondrop={() => drop(group.id, index)}
+                      class="cursor-move rounded-lg border p-3 text-sm transition-opacity {draggedQuestionIndex[
+                        group.id
+                      ] === index
+                        ? 'opacity-50'
+                        : ''}"
+                    >
+                      <div class="flex items-center gap-2">
+                        <GripVertical class="h-4 w-4 text-muted-foreground" />
+                        <span class="flex-1">{q.questionText}</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onclick={() => startEdit(q)}
+                          class="h-8 w-8 p-0"
+                        >
+                          <Edit class="h-4 w-4" />
+                        </Button>
+                        <form
+                          method="POST"
+                          action="?/deleteQuestion"
+                          use:enhance={() =>
+                            async ({ update }) => (await update(), invalidateAll())}
+                          class="inline"
+                        >
+                          <input type="hidden" name="questionId" value={q.id} />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant="ghost"
+                            class="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 class="h-4 w-4" />
+                          </Button>
+                        </form>
+                      </div>
                     </div>
-                  </div>
+                  {/if}
                 {/each}
               </div>
             {/if}
+
+            <div class="mt-6">
+              <form
+                method="POST"
+                action="?/deleteGroup"
+                use:enhance={() =>
+                  async ({ update }) => (await update(), invalidateAll())}
+                class="flex items-center justify-start"
+              >
+                <input type="hidden" name="groupId" value={group.id} />
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="sm"
+                  class="text-destructive hover:text-destructive"
+                >
+                  <Trash2 class="mr-2 h-4 w-4" />
+                  Delete Group
+                </Button>
+              </form>
+            </div>
           </CardContent>
         {/if}
       </Card>

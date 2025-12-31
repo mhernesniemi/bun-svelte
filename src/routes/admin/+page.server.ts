@@ -1,5 +1,5 @@
 import { fail, redirect } from "@sveltejs/kit";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, and, isNull } from "drizzle-orm";
 import type { Actions, PageServerLoad } from "./$types";
 import { db } from "@/server/db";
 import { valuationQuestionGroups, valuationQuestions } from "@/server/db/schema";
@@ -13,13 +13,14 @@ export const load: PageServerLoad = async ({ locals }) => {
   const groups = await db
     .select()
     .from(valuationQuestionGroups)
+    .where(isNull(valuationQuestionGroups.deletedAt))
     .orderBy(asc(valuationQuestionGroups.order));
   const groupsWithQuestions = await Promise.all(
     groups.map(async (g) => {
       const questions = await db
         .select()
         .from(valuationQuestions)
-        .where(eq(valuationQuestions.groupId, g.id))
+        .where(and(eq(valuationQuestions.groupId, g.id), isNull(valuationQuestions.deletedAt)))
         .orderBy(asc(valuationQuestions.order));
       return { ...g, questions };
     })
@@ -50,7 +51,7 @@ export const actions: Actions = {
     const existingQuestions = await db
       .select()
       .from(valuationQuestions)
-      .where(eq(valuationQuestions.groupId, groupId))
+      .where(and(eq(valuationQuestions.groupId, groupId), isNull(valuationQuestions.deletedAt)))
       .orderBy(asc(valuationQuestions.order));
     const maxOrder =
       existingQuestions.length > 0 ? Math.max(...existingQuestions.map((q) => q.order)) : -1;
@@ -79,6 +80,49 @@ export const actions: Actions = {
           .where(eq(valuationQuestions.id, questionId))
       )
     );
+
+    return { ok: true };
+  },
+  updateQuestion: async ({ locals, request }) => {
+    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+      return fail(401, { error: "Unauthorized" });
+    const data = await request.formData();
+    const questionId = Number(data.get("questionId")?.toString());
+    const questionText = data.get("questionText")?.toString().trim();
+    if (!Number.isFinite(questionId) || !questionText) return fail(400, { error: "Invalid data" });
+
+    await db
+      .update(valuationQuestions)
+      .set({ questionText })
+      .where(eq(valuationQuestions.id, questionId));
+
+    return { ok: true };
+  },
+  deleteQuestion: async ({ locals, request }) => {
+    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+      return fail(401, { error: "Unauthorized" });
+    const data = await request.formData();
+    const questionId = Number(data.get("questionId")?.toString());
+    if (!Number.isFinite(questionId)) return fail(400, { error: "Invalid question ID" });
+
+    await db
+      .update(valuationQuestions)
+      .set({ deletedAt: new Date() })
+      .where(eq(valuationQuestions.id, questionId));
+
+    return { ok: true };
+  },
+  deleteGroup: async ({ locals, request }) => {
+    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+      return fail(401, { error: "Unauthorized" });
+    const data = await request.formData();
+    const groupId = Number(data.get("groupId")?.toString());
+    if (!Number.isFinite(groupId)) return fail(400, { error: "Invalid group ID" });
+
+    await db
+      .update(valuationQuestionGroups)
+      .set({ deletedAt: new Date() })
+      .where(eq(valuationQuestionGroups.id, groupId));
 
     return { ok: true };
   }
