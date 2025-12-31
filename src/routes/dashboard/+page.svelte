@@ -47,9 +47,10 @@
   $effect(() => {
     if (data.receivedRequests.length === 0) return;
 
-    // Try to load from localStorage
+    // Try to load from localStorage (user-specific)
     if (typeof window !== "undefined") {
-      const savedUserId = localStorage.getItem("dashboard-active-tab");
+      const storageKey = `dashboard-active-tab-${data.user.id}`;
+      const savedUserId = localStorage.getItem(storageKey);
       if (savedUserId) {
         const userId = Number(savedUserId);
         const isValidUser = data.receivedRequests.some((r) => r.userId === userId);
@@ -66,10 +67,11 @@
     }
   });
 
-  // Save active tab to localStorage when it changes
+  // Save active tab to localStorage when it changes (user-specific)
   $effect(() => {
     if (typeof window !== "undefined" && toUserId !== null) {
-      localStorage.setItem("dashboard-active-tab", toUserId.toString());
+      const storageKey = `dashboard-active-tab-${data.user.id}`;
+      localStorage.setItem(storageKey, toUserId.toString());
     }
   });
 
