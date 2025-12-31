@@ -54,7 +54,9 @@
   </div>
 
   <div class="space-y-2">
-    <Label for={`comment-${group.id}`}>Group Comment (optional)</Label>
+    <Label for={`comment-${group.id}`}
+      >Comment <span class="text-muted-foreground">(optional)</span></Label
+    >
     <Textarea
       id={`comment-${group.id}`}
       value={groupAnswers.comment}

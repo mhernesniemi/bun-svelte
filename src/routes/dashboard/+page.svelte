@@ -43,10 +43,33 @@
     );
   });
 
-  // Set the first received request as the default selected user
+  // Load active tab from localStorage or set the first received request as default
   $effect(() => {
-    if (toUserId === null && data.receivedRequests.length > 0) {
+    if (data.receivedRequests.length === 0) return;
+
+    // Try to load from localStorage
+    if (typeof window !== "undefined") {
+      const savedUserId = localStorage.getItem("dashboard-active-tab");
+      if (savedUserId) {
+        const userId = Number(savedUserId);
+        const isValidUser = data.receivedRequests.some((r) => r.userId === userId);
+        if (isValidUser) {
+          toUserId = userId;
+          return;
+        }
+      }
+    }
+
+    // Fallback to first user if no saved tab or saved tab is invalid
+    if (toUserId === null) {
       toUserId = data.receivedRequests[0]?.userId ?? null;
+    }
+  });
+
+  // Save active tab to localStorage when it changes
+  $effect(() => {
+    if (typeof window !== "undefined" && toUserId !== null) {
+      localStorage.setItem("dashboard-active-tab", toUserId.toString());
     }
   });
 
