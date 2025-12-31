@@ -36,6 +36,8 @@ bun install
 
 ```env
 DATABASE_URL=./local.db
+JWT_SECRET=change-me-to-a-long-random-string
+ADMIN_USER=admin
 ```
 
 4. Initialize the database:

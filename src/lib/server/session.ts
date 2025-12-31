@@ -1,10 +1,12 @@
 import type { RequestEvent } from "@sveltejs/kit";
 import { SignJWT, jwtVerify } from "jose";
 import { getUserById } from "./auth";
+import { env } from "$env/dynamic/private";
 
 const COOKIE_NAME = "session";
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+if (!env.JWT_SECRET) throw new Error("JWT_SECRET is not set");
+const SECRET = new TextEncoder().encode(env.JWT_SECRET);
 
 export async function getSessionUser(event: RequestEvent) {
   const token = event.cookies.get(COOKIE_NAME);
