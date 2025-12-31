@@ -12,6 +12,7 @@
   import { Label } from "$lib/components/ui/label";
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
+  import { GripVertical } from "lucide-svelte";
   import type { PageData, ActionData } from "./$types";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -21,6 +22,7 @@
   let newQuestionText = $state<Record<number, string>>({});
   let expanded = new SvelteSet<number>();
   let error = $derived(form?.error ?? null);
+  let draggedQuestionIndex = $state<Record<number, number | null>>({});
 
   function toggle(id: number) {
     if (expanded.has(id)) {
@@ -28,6 +30,45 @@
     } else {
       expanded.add(id);
     }
+  }
+
+  function dragStart(groupId: number, index: number) {
+    draggedQuestionIndex[groupId] = index;
+  }
+
+  async function drop(groupId: number, dropIndex: number) {
+    const dragIndex = draggedQuestionIndex[groupId];
+    if (dragIndex === null || dragIndex === undefined) return;
+
+    const group = data.groups.find((g) => g.id === groupId);
+    if (!group) return;
+
+    const questions = [...group.questions];
+    const draggedQuestion = questions[dragIndex];
+
+    questions.splice(dragIndex, 1);
+    questions.splice(dropIndex, 0, draggedQuestion);
+
+    // Update order values
+    const questionIds = questions.map((q) => q.id);
+
+    const formData = new FormData();
+    formData.append("questionIds", JSON.stringify(questionIds));
+
+    try {
+      const response = await fetch("?/reorderQuestions", {
+        method: "POST",
+        body: formData
+      });
+
+      if (response.ok) {
+        await invalidateAll();
+      }
+    } catch (err) {
+      console.error("Failed to reorder questions:", err);
+    }
+
+    draggedQuestionIndex[groupId] = null;
   }
 </script>
 
@@ -112,8 +153,25 @@
               <p class="text-sm text-muted-foreground">No questions in this group yet.</p>
             {:else}
               <div class="space-y-2">
-                {#each group.questions as q (q.id)}
-                  <div class="rounded-lg border p-3 text-sm">{q.questionText}</div>
+                {#each group.questions as q, index (q.id)}
+                  <div
+                    draggable="true"
+                    role="button"
+                    tabindex="0"
+                    ondragstart={() => dragStart(group.id, index)}
+                    ondragover={(e) => e.preventDefault()}
+                    ondrop={() => drop(group.id, index)}
+                    class="cursor-move rounded-lg border p-3 text-sm transition-opacity {draggedQuestionIndex[
+                      group.id
+                    ] === index
+                      ? 'opacity-50'
+                      : ''}"
+                  >
+                    <div class="flex items-center gap-2">
+                      <GripVertical class="h-4 w-4 text-muted-foreground" />
+                      <span>{q.questionText}</span>
+                    </div>
+                  </div>
                 {/each}
               </div>
             {/if}

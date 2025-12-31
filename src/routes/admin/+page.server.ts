@@ -45,7 +45,41 @@ export const actions: Actions = {
     const groupId = Number(data.get("groupId")?.toString());
     const questionText = data.get("questionText")?.toString().trim();
     if (!Number.isFinite(groupId) || !questionText) return fail(400, { error: "Invalid data" });
-    await db.insert(valuationQuestions).values({ groupId, questionText, order: 0 });
+
+    // Get max order for this group
+    const existingQuestions = await db
+      .select()
+      .from(valuationQuestions)
+      .where(eq(valuationQuestions.groupId, groupId))
+      .orderBy(asc(valuationQuestions.order));
+    const maxOrder =
+      existingQuestions.length > 0 ? Math.max(...existingQuestions.map((q) => q.order)) : -1;
+
+    await db.insert(valuationQuestions).values({ groupId, questionText, order: maxOrder + 1 });
+    return { ok: true };
+  },
+  reorderQuestions: async ({ locals, request }) => {
+    if (!locals.user || locals.user.username !== ADMIN_EMAIL)
+      return fail(401, { error: "Unauthorized" });
+    const data = await request.formData();
+    const questionIdsJson = data.get("questionIds")?.toString();
+    if (!questionIdsJson) return fail(400, { error: "Question IDs are required" });
+
+    const questionIds: number[] = JSON.parse(questionIdsJson);
+    if (!Array.isArray(questionIds) || questionIds.length === 0) {
+      return fail(400, { error: "Invalid question IDs" });
+    }
+
+    // Update order for each question
+    await Promise.all(
+      questionIds.map((questionId, index) =>
+        db
+          .update(valuationQuestions)
+          .set({ order: index })
+          .where(eq(valuationQuestions.id, questionId))
+      )
+    );
+
     return { ok: true };
   }
 };
