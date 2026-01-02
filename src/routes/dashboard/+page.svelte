@@ -4,7 +4,6 @@
   import { toast } from "svelte-sonner";
   import { fly } from "svelte/transition";
   import { expoInOut } from "svelte/easing";
-  import { Heading } from "$lib/components/ui/heading";
   import { Button } from "$lib/components/ui/button";
   import {
     Card,
@@ -16,6 +15,7 @@
   import * as Tabs from "$lib/components/ui/tabs/index.js";
   import FeedbackRequestSelection from "@/components/feedback/feedback-request-selection.svelte";
   import ValuationGroupCard from "@/components/feedback/valuation-group-card.svelte";
+  import DashboardHeader from "@/components/dashboard/dashboard-header.svelte";
   import type { PageData, ActionData } from "./$types";
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -157,25 +157,7 @@
   class="min-h-screen w-full bg-linear-to-b from-background via-background to-muted/30 px-4 py-8"
 >
   <div class="mx-auto max-w-4xl">
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div class="min-w-0">
-        <Heading level={1} class="text-2xl sm:text-3xl">Colleague Feedback</Heading>
-      </div>
-      <div class="flex items-center gap-3">
-        <div
-          class="hidden items-center gap-2 rounded-full border bg-card/50 px-3 py-1 text-sm text-muted-foreground backdrop-blur supports-backdrop-filter:bg-card/40 sm:flex"
-        >
-          <span class="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span>
-          <span class="max-w-56 truncate">{data.user.username}</span>
-        </div>
-        {#if data.isAdmin}
-          <Button href="/admin" variant="outline" size="sm">Admin</Button>
-        {/if}
-        <form method="POST" action="/logout">
-          <Button type="submit" variant="outline" size="sm">Logout</Button>
-        </form>
-      </div>
-    </div>
+    <DashboardHeader username={data.user.username} isAdmin={data.isAdmin} />
 
     {#if !data.hasRequests}
       <FeedbackRequestSelection users={data.users} form={form ?? undefined} />
