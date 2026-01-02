@@ -209,7 +209,7 @@
           >
             <CardHeader>
               <CardTitle class="flex items-center justify-between gap-2">
-                <span>Give Feedback to {getUserName(toUserId)}</span>
+                <span>Give Anonymous Feedback to {getUserName(toUserId)}</span>
                 {#if toUserId !== null}
                   {#if isFeedbackSubmitted}
                     <span class="text-green-500">Completed</span>
@@ -219,7 +219,11 @@
                 {/if}
               </CardTitle>
               <CardDescription>
-                Provide feedback to {getUserName(toUserId)} on their performance and areas for improvement.
+                1 to 5 scale relative to expectations, where a score of 3 reflects meeting
+                expectations. <span
+                  class="underlinetext-primary cursor-default text-white underline-offset-4 hover:underline"
+                  >More</span
+                >
               </CardDescription>
             </CardHeader>
             <CardContent>
