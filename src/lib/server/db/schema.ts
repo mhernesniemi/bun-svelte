@@ -1,6 +1,8 @@
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { relations } from "drizzle-orm";
 
+/**
+ * Users
+ */
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
@@ -10,6 +12,9 @@ export const users = sqliteTable("users", {
     .$defaultFn(() => new Date())
 });
 
+/**
+ * Comments
+ */
 export const comments = sqliteTable("comments", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id")
@@ -23,6 +28,9 @@ export const comments = sqliteTable("comments", {
     .$defaultFn(() => new Date())
 });
 
+/**
+ * Feedback requests
+ */
 export const feedbackRequests = sqliteTable("feedback_requests", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id")
@@ -36,6 +44,9 @@ export const feedbackRequests = sqliteTable("feedback_requests", {
     .$defaultFn(() => new Date())
 });
 
+/**
+ * Valuation question groups
+ */
 export const valuationQuestionGroups = sqliteTable("valuation_question_groups", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
@@ -46,6 +57,9 @@ export const valuationQuestionGroups = sqliteTable("valuation_question_groups", 
     .$defaultFn(() => new Date())
 });
 
+/**
+ * Valuation questions
+ */
 export const valuationQuestions = sqliteTable("valuation_questions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   groupId: integer("group_id")
@@ -59,6 +73,9 @@ export const valuationQuestions = sqliteTable("valuation_questions", {
     .$defaultFn(() => new Date())
 });
 
+/**
+ * Feedback
+ */
 export const feedback = sqliteTable("feedback", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   fromUserId: integer("from_user_id")
@@ -72,34 +89,9 @@ export const feedback = sqliteTable("feedback", {
     .$defaultFn(() => new Date())
 });
 
-export const valuationAnswers = sqliteTable("valuation_answers", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  feedbackId: integer("feedback_id")
-    .notNull()
-    .references(() => feedback.id, { onDelete: "cascade" }),
-  questionId: integer("question_id")
-    .notNull()
-    .references(() => valuationQuestions.id),
-  rating: integer("rating").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date())
-});
-
-export const valuationGroupAnswers = sqliteTable("valuation_group_answers", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  feedbackId: integer("feedback_id")
-    .notNull()
-    .references(() => feedback.id, { onDelete: "cascade" }),
-  groupId: integer("group_id")
-    .notNull()
-    .references(() => valuationQuestionGroups.id),
-  comment: text("comment"),
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .$defaultFn(() => new Date())
-});
-
+/**
+ * Feedback drafts
+ */
 export const feedbackDrafts = sqliteTable("feedback_drafts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   fromUserId: integer("from_user_id")
@@ -114,78 +106,39 @@ export const feedbackDrafts = sqliteTable("feedback_drafts", {
     .$defaultFn(() => new Date())
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
-  comments: many(comments),
-  feedbackRequests: many(feedbackRequests, { relationName: "userRequests" }),
-  requestedFeedback: many(feedbackRequests, { relationName: "requestedFromUser" }),
-  feedbackSent: many(feedback, { relationName: "sentFeedback" }),
-  feedbackReceived: many(feedback, { relationName: "receivedFeedback" }),
-  feedbackDrafts: many(feedbackDrafts)
-}));
+/**
+ * Valuation answers
+ */
+export const valuationAnswers = sqliteTable("valuation_answers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  feedbackId: integer("feedback_id")
+    .notNull()
+    .references(() => feedback.id, { onDelete: "cascade" }),
+  questionId: integer("question_id")
+    .notNull()
+    .references(() => valuationQuestions.id),
+  rating: integer("rating").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date())
+});
 
-export const commentsRelations = relations(comments, ({ one }) => ({
-  user: one(users, { fields: [comments.userId], references: [users.id] })
-}));
-
-export const feedbackRequestsRelations = relations(feedbackRequests, ({ one }) => ({
-  user: one(users, {
-    fields: [feedbackRequests.userId],
-    references: [users.id],
-    relationName: "userRequests"
-  }),
-  requestedUser: one(users, {
-    fields: [feedbackRequests.requestedUserId],
-    references: [users.id],
-    relationName: "requestedFromUser"
-  })
-}));
-
-export const valuationQuestionGroupsRelations = relations(valuationQuestionGroups, ({ many }) => ({
-  questions: many(valuationQuestions),
-  groupAnswers: many(valuationGroupAnswers)
-}));
-
-export const valuationQuestionsRelations = relations(valuationQuestions, ({ one, many }) => ({
-  group: one(valuationQuestionGroups, {
-    fields: [valuationQuestions.groupId],
-    references: [valuationQuestionGroups.id]
-  }),
-  answers: many(valuationAnswers)
-}));
-
-export const feedbackRelations = relations(feedback, ({ one, many }) => ({
-  fromUser: one(users, {
-    fields: [feedback.fromUserId],
-    references: [users.id],
-    relationName: "sentFeedback"
-  }),
-  toUser: one(users, {
-    fields: [feedback.toUserId],
-    references: [users.id],
-    relationName: "receivedFeedback"
-  }),
-  answers: many(valuationAnswers),
-  groupAnswers: many(valuationGroupAnswers)
-}));
-
-export const valuationAnswersRelations = relations(valuationAnswers, ({ one }) => ({
-  feedback: one(feedback, { fields: [valuationAnswers.feedbackId], references: [feedback.id] }),
-  question: one(valuationQuestions, {
-    fields: [valuationAnswers.questionId],
-    references: [valuationQuestions.id]
-  })
-}));
-
-export const valuationGroupAnswersRelations = relations(valuationGroupAnswers, ({ one }) => ({
-  feedback: one(feedback, {
-    fields: [valuationGroupAnswers.feedbackId],
-    references: [feedback.id]
-  }),
-  group: one(valuationQuestionGroups, {
-    fields: [valuationGroupAnswers.groupId],
-    references: [valuationQuestionGroups.id]
-  })
-}));
+/**
+ * Valuation group answers
+ */
+export const valuationGroupAnswers = sqliteTable("valuation_group_answers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  feedbackId: integer("feedback_id")
+    .notNull()
+    .references(() => feedback.id, { onDelete: "cascade" }),
+  groupId: integer("group_id")
+    .notNull()
+    .references(() => valuationQuestionGroups.id),
+  comment: text("comment"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date())
+});
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

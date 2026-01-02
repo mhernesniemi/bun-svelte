@@ -9,8 +9,8 @@
 
   let { error }: Props = $props();
 
-  const status = error.status ?? 500;
-  const message = error.message ?? "An unexpected error occurred";
+  const status = $derived(error.status ?? 500);
+  const message = $derived(error.message ?? "An unexpected error occurred");
 </script>
 
 <div class="flex min-h-screen items-center justify-center px-4">
@@ -32,4 +32,7 @@
     </CardContent>
   </Card>
 </div>
+
+
+
 
